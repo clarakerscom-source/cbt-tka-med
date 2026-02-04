@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBT TKA KELAS 6</title>
+
+  <!-- Firebase SDK (opsional) -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  <!-- XLSX (Excel export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root { --primary: #2563eb; --secondary: #f59e0b; --success: #10b981; --bg: #f8fafc; --dark: #1e293b; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--dark); height: 100vh; display: flex; flex-direction: column; }
+
+    .hidden { display: none !important; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; width: 100%; box-sizing: border-box; }
+    .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline { background: white; border: 1px solid #cbd5e1; color: var(--dark); }
+    .btn-warning { background: var(--secondary); color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+
+    /* 1. LOGIN PAGE */
+    
+    /* Login Logo Header */
+    .login-header{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+      margin-bottom: 14px;
+    }
+    .login-logo{
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+    }
+
+#view-login { display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); }
+    .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+    .login-card h1 { color: var(--primary); text-align: center; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
+
+    /* 2. EXAM INTERFACE */
+    #view-exam { display: flex; flex: 1; height: 100vh; overflow: hidden; }
+
+    .exam-sidebar { width: 300px; background: white; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid #e2e8f0; background: #f1f5f9; text-align: center; }
+    .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 20px; }
+    .nav-item { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .nav-item.active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+    .nav-item.answered { background: var(--success); color: white; border-color: var(--success); }
+    .nav-item.flagged { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+    .exam-main { flex: 1; display: flex; flex-direction: column; height: 100%; overflow-y: auto; position: relative; }
+    .exam-topbar { padding: 15px 30px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+    .timer-badge { background: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-family: monospace; font-size: 1.2em; }
+
+    .question-area { flex: 1; padding: 40px; max-width: 900px; margin: 0 auto; width: 100%; }
+    .stimulus-box { background: #f8fafc; padding: 20px; border-left: 4px solid var(--primary); border-radius: 4px; margin-bottom: 20px; line-height: 1.6; font-size: 1.05em; color: #334155; }
+
+    .stimulus-box img { max-width: 100%; height: auto; display: block; margin-top: 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .question-text { font-size: 1.2em; font-weight: 700; margin-bottom: 20px; }
+
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+    .option-item { display: flex; align-items: center; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; transition: 0.2s; background: white; }
+    .option-item:hover { background: #eff6ff; border-color: var(--primary); }
+    .option-item input { margin-right: 15px; transform: scale(1.2); }
+
+    .exam-footer { padding: 20px 40px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .exam-footer .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+    /* 3. RESULT & TEACHER PAGE */
+    .center-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 20px; }
+    .score-circle { width: 150px; height: 150px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 3em; font-weight: bold; margin: 20px 0; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #view-exam { flex-direction: column; }
+      .exam-sidebar { width: 100%; height: auto; order: 2; border-top: 1px solid #e2e8f0; }
+      .nav-grid { grid-template-columns: repeat(10, 1fr); padding: 10px; }
+      .exam-main { height: auto; flex: 1; order: 1; }
+      .question-area { padding: 20px; }
+      .exam-footer { padding: 15px; }
+    }
+  
+    /* REVIEW (Siswa) */
+    .review-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    .badge-ok { display:inline-block; padding:2px 10px; border-radius:999px; background: #dcfce7; color:#166534; font-weight:800; font-size:12px; }
+    .badge-bad { display:inline-block; padding:2px 10px; border-radius:999px; background: #fee2e2; color:#991b1b; font-weight:800; font-size:12px; }
+    .review-kv { display:grid; grid-template-columns: 140px 1fr; gap:10px; margin-top:8px; }
+    .review-kv div { padding:6px 0; border-top:1px dashed #e2e8f0; }
+    .review-kv div:first-child, .review-kv div:nth-child(2) { border-top:none; }
+    .review-answer { font-weight:700; }
+
+  </style>
+</head>
+<body>
+
+  <!-- 1. LOGIN -->
+  <div id="view-login">
+    <div class="login-card">
+      
+
+      <div class="login-header">
+        <img src="images/logoels.png" alt="logoels" class="login-logo" />
+        <h1 style="margin:0; color: var(--primary); text-align:center;">CBT TKA KELAS 6</h1>
+      </div>
+
+<div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="nama" placeholder="Masukan nama" />
+      </div>
+      <div class="form-group">
+        <label>Asal Sekolah</label>
+        <input type="text" id="sekolah" placeholder="Nama sekolah" />
+      </div>
+      <div class="form-group">
+        <label>Mata Pelajaran</label>
+        <select id="mapel">
+          <option value="" disabled selected>-- Pilih Mapel --</option>
+          <option value="matematika">Matematika</option>
+          <option value="bahasa">Bhs. Indonesia</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width: 100%;" onclick="startExam()">Mulai Ujian</button>
+      <div style="text-align: center; margin-top: 20px;">
+        <small style="color: #64748b; cursor: pointer;" onclick="showTeacherLogin()">Login Guru</small>
+        <span style="color:#cbd5e1; margin: 0 8px;">|</span>
+        <small style="color: #64748b; cursor: pointer;" onclick="showGuestTeacher()">Guru Tamu</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. UJIAN -->
+  <div id="view-exam" class="hidden">
+    <main class="exam-main">
+      <header class="exam-topbar">
+        <div>
+          <h3 style="margin:0" id="exam-subject-title">Matematika</h3>
+          <small style="color: #64748b;" id="student-info-display">-</small>
+        </div>
+        <div class="timer-badge" id="timer">60:00</div>
+      </header>
+
+      <div class="question-area">
+        <div id="question-content"></div>
+      </div>
+
+      <footer class="exam-footer">
+        <button class="btn btn-outline" onclick="prevQuestion()" id="btn-prev">← Sebelumnya</button>
+        <button class="btn btn-warning" onclick="toggleFlag()">Ragu-ragu</button>
+        <button class="btn btn-primary" onclick="nextQuestion()" id="btn-next">Selanjutnya →</button>
+        <button class="btn btn-danger hidden" id="btn-finish" onclick="finishExam(false)">Selesai & Kumpul</button>
+      </footer>
+    </main>
+
+    <aside class="exam-sidebar">
+      <div class="sidebar-header">
+        <strong>Navigasi Soal</strong>
+        <div style="font-size: 12px; margin-top: 5px; color: #64748b;">
+          <span style="display:inline-block; width:10px; height:10px; background:#10b981; border-radius:50%"></span> Isi
+          <span style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:50%; margin-left:5px;"></span> Ragu
+        </div>
+      </div>
+      <div class="nav-grid" id="nav-grid"></div>
+    </aside>
+  </div>
+
+  <!-- 3. HASIL -->
+  <div id="view-result" class="hidden center-screen">
+    <h2>Ujian Selesai!</h2>
+    <p>Terima kasih telah mengerjakan dengan jujur.</p>
+    <div class="score-circle" id="final-score">0</div>
+    <p id="feedback-text" style="max-width: 500px; color: #64748b;">Loading...</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+  <button class="btn btn-outline" id="btn-review" onclick="showReview()" disabled>Lihat Jawaban Benar/Salah</button>
+  <button class="btn btn-primary" onclick="location.reload()">Kembali ke Halaman Utama</button>
+</div>
+  
+  <!-- 3b. REVIEW JAWABAN (Siswa) -->
+  <div id="view-review" class="hidden container" style="margin-top: 30px; margin-bottom: 40px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom: 14px;">
+      <div>
+        <h2 style="margin:0">✅ Review Jawaban</h2>
+        <div id="review-meta" style="color:#64748b; font-size:12px; margin-top:4px;">-</div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="backToResult()">← Kembali ke Nilai</button>
+        <button class="btn btn-primary" onclick="location.reload()">Selesai</button>
+      </div>
+    </div>
+
+    <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:14px; margin-bottom: 14px; color:#64748b; font-size: 12px; line-height:1.5;">
+      Catatan: Halaman ini hanya menampilkan <b>jawaban siswa</b> dan <b>kunci benar</b> (tanpa pembahasan).
+    </div>
+
+    <div id="review-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </div>
+
+
+  <!-- 4. GURU -->
+  <div id="view-teacher" class="hidden container" style="margin-top: 50px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; gap:12px; flex-wrap:wrap;">
+      <h2 style="margin:0">📊 Dashboard Guru</h2>
+      <button class="btn btn-danger" onclick="location.reload()">Keluar</button>
+    </div>
+    <div id="teacher-login-form" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <input type="password" id="guru-pass" placeholder="" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;" />
+      <button class="btn btn-primary" onclick="loginGuru()">Masuk</button>
+    </div>
+    <div id="teacher-data" class="hidden" style="overflow:auto;">
+      
+      <div id="teacher-download-section" style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin: 10px 0 14px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="btn-dl-csv" class="btn btn-outline" onclick="downloadResultsCSV()">⬇️ Unduh Hasil (CSV)</button>
+          <button id="btn-dl-json" class="btn btn-outline" onclick="downloadResultsJSON()">⬇️ Unduh Hasil (JSON)</button>
+          <button id="btn-dl-xlsx" class="btn btn-outline" onclick="downloadResultsXLSX()">⬇️ Unduh Hasil (Excel)</button>
+        </div>
+        <div style="font-size:12px; color:#64748b;">
+          Tips: jika memakai Firestore, pastikan rules mengizinkan read untuk akun Anda.
+        </div>
+      </div>
+
+      <!-- Search (Guru / Guru Tamu) -->
+      <div id="teacher-search-bar" style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin: 8px 0 14px;">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input id="teacher-search" type="text" placeholder="🔎 Cari nama / sekolah..." style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; min-width: 240px;" oninput="onTeacherSearchInput()" />
+          <button class="btn btn-outline" type="button" onclick="clearTeacherSearch()">Reset</button>
+        </div>
+        <div id="teacher-search-meta" style="font-size:12px; color:#64748b;">-</div>
+      </div>
+
+<table style="width:100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <thead style="background: #f1f5f9;">
+          <tr>
+            <th style="padding:15px; text-align:left; cursor:pointer; user-select:none;" onclick="setSort('waktu')">Waktu <span id="sort-waktu" style="font-size:12px;color:#64748b;"></span></th>
+            <th style="padding:15px; text-align:left; cursor:pointer; user-select:none;" onclick="setSort('nama')">Nama <span id="sort-nama" style="font-size:12px;color:#64748b;"></span></th>
+            <th style="padding:15px; text-align:left; cursor:pointer; user-select:none;" onclick="setSort('sekolah')">Sekolah <span id="sort-sekolah" style="font-size:12px;color:#64748b;"></span></th>
+            <th style="padding:15px; text-align:left;">Mapel</th>
+            <th style="padding:15px; text-align:left; cursor:pointer; user-select:none;" onclick="setSort('score')">Nilai <span id="sort-score" style="font-size:12px;color:#64748b;"></span></th>
+          </tr>
+        </thead>
+        <tbody id="teacher-table-body"></tbody>
+      </table>
+      <div id="teacher-pagination" style="margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div id="teacher-pagination-meta" style="color:#64748b; font-size:12px;">-</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn btn-outline" id="teacher-prev" onclick="gotoTeacherPage(teacherPage-1)">← Prev</button>
+          <span id="teacher-page-indicator" style="font-weight:700;">1/1</span>
+          <button class="btn btn-outline" id="teacher-next" onclick="gotoTeacherPage(teacherPage+1)">Next →</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; color:#64748b; font-size:12px;">
+        Catatan: Data tersimpan di <b>localStorage</b> (dan akan ikut tersimpan ke <b>Firestore</b> jika konfigurasi Firebase diisi).
+      
+      <div id="question-bank-section" style="margin-top:18px; background: white; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin:0 0 12px;">🧩 Kelola Bank Soal</h3>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 12px;">
+          <label style="font-weight:600;">Mapel:</label>
+          <select id="q-mapel-select" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+            <option value="matematika">Literasi Numerasi (Matematika)</option>
+            <option value="bahasa">Literasi Membaca (Bhs. Indonesia)</option>
+          </select>
+          <button class="btn btn-outline" onclick="renderQuestionManager()">Muat</button>
+          <button class="btn btn-warning" onclick="resetQuestionBank()">Reset ke Default</button>
+        </div>
+
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin: 8px 0 12px;">
+  <button class="btn btn-outline" onclick="exportQuestionBankXLSX()">⬇️ Export Soal (Excel)</button>
+
+  <button class="btn btn-primary" onclick="document.getElementById('q-import-file').click()">⬆️ Import Soal (Excel)</button>
+  <input id="q-import-file" type="file" accept=".xlsx,.xls" class="hidden" onchange="handleImportQuestions(event)" />
+
+  <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#475569;">
+    <input type="checkbox" id="q-import-replace" />
+    Replace bank (hapus dulu sebelum impor)
+  </label>
+
+  <button class="btn btn-outline" onclick="downloadQuestionTemplateXLSX()">⬇️ Template Excel</button>
+  <button class="btn btn-outline" onclick="reloadBankFromSource()">🔄 Reload Soal</button>
+</div>
+
+        <div id="question-manager-list" style="overflow:auto; border:1px solid #e2e8f0; border-radius: 12px;"></div>
+
+        <div style="margin-top:14px; display:grid; grid-template-columns: 1fr; gap:10px;">
+          <h4 style="margin: 6px 0 0;">➕ Tambah Soal Baru</h4>
+
+          <textarea id="q-stimulus" rows="3" placeholder="Stimulus (boleh dikosongkan)" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:12px; box-sizing:border-box;"></textarea>
+
+          <div style="display:grid; grid-template-columns: 1fr; gap:10px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:12px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <input id="q-img-url" type="url" placeholder="Link gambar stimulus (opsional) https://..." style="flex:1; min-width:240px; padding:12px; border:1px solid #cbd5e1; border-radius:12px;" oninput="onStimulusImageUrlInput()" />
+              <input id="q-img-file" type="file" accept="image/*" style="padding:10px; border:1px solid #cbd5e1; border-radius:12px; background:white;" onchange="onStimulusImageFileChange(event)" />
+              <button class="btn btn-outline" type="button" onclick="clearStimulusImage()">Hapus Gambar</button>
+            </div>
+            <div id="q-img-preview-wrap" class="hidden" style="text-align:left;">
+              <div style="font-size:12px; color:#64748b; margin-bottom:6px;">Preview gambar stimulus:</div>
+              <img id="q-img-preview" alt="Preview gambar stimulus" style="max-width:320px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0; background:white;" />
+              <div style="font-size:12px; color:#64748b; margin-top:6px;">
+                Catatan: jika Anda memilih file, gambar akan disimpan sebagai <b>data URL</b> di localStorage (bisa membuat file/browser jadi berat jika banyak).
+              </div>
+            </div>
+          </div>
+
+          <textarea id="q-text" rows="2" placeholder="Pertanyaan (wajib)" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:12px; box-sizing:border-box;"></textarea>
+
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <label style="font-weight:600;">Jenis Soal:</label>
+            <select id="q-type" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;" onchange="onQuestionTypeChange()">
+              <option value="mc">Pilihan Ganda</option>
+              <option value="mcc">Pilihan Ganda Kompleks</option>
+              <option value="tf">Benar / Salah (Pernyataan)</option>
+            </select>
+            <small id="q-type-hint" style="color:#64748b;">Pilih jenis soal sebelum mengisi opsi/kunci.</small>
+          </div>
+
+          <!-- PG (single answer) -->
+          <div id="q-type-mc">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 6px;">
+              <input id="q-opt-a" placeholder="Opsi A" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q-opt-b" placeholder="Opsi B" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q-opt-c" placeholder="Opsi C" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q-opt-d" placeholder="Opsi D" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top: 8px;">
+              <label style="font-weight:600;">Kunci:</label>
+              <select id="q-answer" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                <option value="0">A</option>
+                <option value="1">B</option>
+                <option value="2">C</option>
+                <option value="3">D</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PG Kompleks (multi correct, max 3 dari 5) -->
+          <div id="q-type-mcc" class="hidden">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 6px;">
+              <input id="q2-opt-a" placeholder="Opsi A" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q2-opt-b" placeholder="Opsi B" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q2-opt-c" placeholder="Opsi C" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q2-opt-d" placeholder="Opsi D" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+              <input id="q2-opt-e" placeholder="Opsi E" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top: 8px;">
+              <label style="font-weight:600;">Jawaban Benar (maks 3):</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="q2-ans-0" onchange="onMCCKeyToggle(0)" /> A</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="q2-ans-1" onchange="onMCCKeyToggle(1)" /> B</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="q2-ans-2" onchange="onMCCKeyToggle(2)" /> C</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="q2-ans-3" onchange="onMCCKeyToggle(3)" /> D</label>
+              <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="q2-ans-4" onchange="onMCCKeyToggle(4)" /> E</label>
+              <span id="q2-ans-count" style="font-size:12px; color:#64748b;">0 dipilih</span>
+            </div>
+          </div>
+
+          <!-- Benar/Salah dengan stimulus + pernyataan -->
+          <div id="q-type-tf" class="hidden">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top: 6px;">
+              <label style="font-weight:600;">Jumlah Pernyataan:</label>
+              <select id="q3-count" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;" onchange="onTFCountChange()">
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+              </select>
+              <small style="color:#64748b;">Isi 3–4 pernyataan dan pilih Benar/Salah untuk kunci.</small>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr; gap:10px; margin-top: 8px;">
+              <div style="display:grid; grid-template-columns: 1fr 160px; gap:10px; align-items:center;">
+                <input id="q3-s0" placeholder="Pernyataan 1" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+                <select id="q3-a0" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                  <option value="true">Benar</option>
+                  <option value="false">Salah</option>
+                </select>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 160px; gap:10px; align-items:center;">
+                <input id="q3-s1" placeholder="Pernyataan 2" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+                <select id="q3-a1" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                  <option value="true">Benar</option>
+                  <option value="false">Salah</option>
+                </select>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 160px; gap:10px; align-items:center;">
+                <input id="q3-s2" placeholder="Pernyataan 3" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+                <select id="q3-a2" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                  <option value="true">Benar</option>
+                  <option value="false">Salah</option>
+                </select>
+              </div>
+
+              <div id="q3-row-3" style="display:grid; grid-template-columns: 1fr 160px; gap:10px; align-items:center;">
+                <input id="q3-s3" placeholder="Pernyataan 4" style="padding:12px; border:1px solid #cbd5e1; border-radius:12px;" />
+                <select id="q3-a3" style="padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                  <option value="true">Benar</option>
+                  <option value="false">Salah</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top: 10px;">
+            <button class="btn btn-primary" id="q-save-btn" onclick="saveQuestion()">Simpan Soal</button>
+            <button class="btn btn-outline hidden" id="q-cancel-edit-btn" type="button" onclick="cancelEditQuestion()">Batal Edit</button>
+            <span class="hidden" id="q-editing-indicator" style="font-size:12px; color:#64748b;">Sedang mengedit soal.</span>
+          </div>
+
+          <div style="font-size:12px; color:#64748b;">
+            Bank soal disimpan di <b>localStorage</b> pada perangkat/browser ini. Jika Anda ingin multi perangkat, nanti bisa dipindah ke Firestore.
+          </div>
+        </div>
+      </div>
+
+</div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+  apiKey: "AIzaSyALtruG_hEHI1PKPpaYd1nwBCULt3mRSPw",
+  authDomain: "tka-med.firebaseapp.com",
+  projectId: "tka-med",
+  storageBucket: "tka-med.firebasestorage.app",
+  messagingSenderId: "292526507036",
+  appId: "1:292526507036:web:5e8e0004b7c85ea6f8cbd9"
+};
+
+    let db;
+    let unsubscribeResults = null;
+    try {
+      if (firebaseConfig.apiKey) {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+      }
+    } catch (e) { console.error("Firebase Error:", e); }
+
+    const defaultMathHOTS = [
+      { stimulus: "Ibu ingin membuat 2 loyang kue bolu untuk acara arisan. Resep asli untuk 1 loyang kue membutuhkan 3/4 kg tepung terigu. Di dapur, Ibu hanya memiliki persediaan tepung sebanyak 2 kg.",
+        q: "Berapakah sisa tepung terigu Ibu setelah membuat 2 loyang kue tersebut?",
+        opt: ["0,25 kg","0,50 kg","0,75 kg","1,00 kg"], a: 1 },
+      { stimulus: "Pak Budi ronda setiap 4 hari sekali, Pak Andi setiap 6 hari sekali, dan Pak Cipta setiap 8 hari sekali. Mereka ronda bersama pertama kali tanggal 1 Januari.",
+        q: "Tanggal berapakah mereka akan ronda bersama-sama lagi untuk kedua kalinya?",
+        opt: ["12 Januari","24 Januari","25 Januari","4 Februari"], a: 2 },
+      { stimulus: "Sebuah bak mandi berbentuk kubus memiliki kedalaman 80 cm. Bak diisi penuh, lalu air berkurang 1/4 bagian. (1 liter = 1 dm³)",
+        q: "Berapa liter sisa air di dalam bak sekarang?",
+        opt: ["384 liter","512 liter","128 liter","640 liter"], a: 0 },
+      { stimulus: "Harga sepatu Rp 200.000. Diskon 20% untuk semua barang. Ayah membawa uang Rp 300.000.",
+        q: "Jika Ayah membeli sepatu itu, berapa uang kembaliannya?",
+        opt: ["Rp 140.000","Rp 160.000","Rp 40.000","Rp 120.000"], a: 0 },
+      { stimulus: "Suhu lemari pendingin mula-mula -4°C. Saat listrik mati, suhu naik 2°C tiap 30 menit.",
+        q: "Jika listrik mati 2 jam, berapakah suhu sekarang?",
+        opt: ["0°C","2°C","4°C","8°C"], a: 2 },
+      { stimulus: "Di perpustakaan, 3/5 dari 150 buku adalah buku cerita. Sisanya buku pengetahuan.",
+        q: "Berapa banyak buku pengetahuan di perpustakaan itu?",
+        opt: ["60 buku","90 buku","120 buku","150 buku"], a: 0 },
+      { stimulus: "Sebuah kelas berisi 32 siswa. 1/4 siswa ikut lomba sains dan 3/8 siswa ikut lomba olahraga. Tidak ada siswa yang ikut kedua lomba.",
+        q: "Berapa siswa yang tidak ikut lomba apa pun?",
+        opt: ["12 siswa","14 siswa","16 siswa","18 siswa"], a: 0 },
+      { stimulus: "Sebuah tangki berisi 45 liter air. Air itu digunakan untuk mengisi botol 600 ml.",
+        q: "Maksimal berapa botol penuh yang bisa diisi?",
+        opt: ["70 botol","75 botol","80 botol","85 botol"], a: 1 },
+      { stimulus: "Jarak rumah Dika ke sekolah 3,6 km. Dika sudah berjalan 1,25 km lalu naik sepeda sejauh 1,8 km.",
+        q: "Berapa km jarak yang belum ditempuh Dika?",
+        opt: ["0,45 km","0,55 km","0,65 km","0,75 km"], a: 1 },
+      { stimulus: "Sebuah toko memberi promo: beli 3 pensil harga satuannya Rp 4.000, mendapat potongan Rp 2.000 dari total belanja.",
+        q: "Berapa yang harus dibayar untuk 3 pensil?",
+        opt: ["Rp 10.000","Rp 12.000","Rp 14.000","Rp 8.000"], a: 0 },
+      { stimulus: "Sebuah kolam berbentuk balok: panjang 4 m, lebar 3 m, kedalaman 1,5 m. Kolam terisi air 2/3 bagian.",
+        q: "Berapa volume air di kolam (dalam m³)?",
+        opt: ["12 m³","18 m³","24 m³","36 m³"], a: 0 },
+      { stimulus: "Ibu membeli 2 kg jeruk. Ternyata 15% jeruk busuk dan dibuang.",
+        q: "Berapa kg jeruk yang masih baik?",
+        opt: ["1,70 kg","1,75 kg","1,80 kg","1,85 kg"], a: 0 },
+      { stimulus: "Sebuah peta memiliki skala 1 : 200.000. Jarak dua kota di peta adalah 7 cm.",
+        q: "Berapa jarak sebenarnya (dalam km)?",
+        opt: ["7 km","14 km","21 km","28 km"], a: 1 },
+      { stimulus: "Sebuah sekolah mengumpulkan sumbangan. Hari Senin terkumpul Rp 360.000, hari Selasa Rp 420.000, hari Rabu Rp 300.000.",
+        q: "Berapa rata-rata sumbangan per hari?",
+        opt: ["Rp 340.000","Rp 360.000","Rp 380.000","Rp 400.000"], a: 1 },
+      { stimulus: "Di kantin, 5 roti dan 2 susu harganya Rp 44.000. Sedangkan 3 roti dan 2 susu harganya Rp 34.000.",
+        q: "Berapa harga 1 roti?",
+        opt: ["Rp 4.000","Rp 5.000","Rp 6.000","Rp 7.000"], a: 1 },
+      { stimulus: "Sebuah bus berangkat pukul 07.35. Perjalanan memakan waktu 2 jam 25 menit.",
+        q: "Bus tiba pukul...",
+        opt: ["09.50","10.00","10.05","10.10"], a: 1 },
+      { stimulus: "Panjang pita 2,4 m dipotong menjadi 6 bagian sama panjang.",
+        q: "Berapa panjang setiap potongan pita?",
+        opt: ["0,2 m","0,3 m","0,4 m","0,5 m"], a: 2 },
+      { stimulus: "Sebuah kotak berisi kelereng merah dan biru. Total 45 kelereng. Kelereng merah 5 lebih banyak daripada biru.",
+        q: "Berapa kelereng biru?",
+        opt: ["18","20","22","25"], a: 1 },
+      { stimulus: "Harga sebuah tas Rp 180.000. Bulan ini naik 10%, bulan depan turun 10% dari harga bulan ini.",
+        q: "Harga tas setelah naik lalu turun adalah...",
+        opt: ["Rp 178.200","Rp 180.000","Rp 181.800","Rp 198.000"], a: 0 },
+      { stimulus: "Di sebuah kelas, nilai matematika 5 siswa: 70, 80, 75, 90, 85.",
+        q: "Berapa median nilai tersebut?",
+        opt: ["75","80","82","85"], a: 1 },
+      { stimulus: "Sebuah toko menjual gula 2,5 kg seharga Rp 37.500.",
+        q: "Berapa harga 1 kg gula?",
+        opt: ["Rp 12.500","Rp 15.000","Rp 17.500","Rp 20.000"], a: 1 },
+      { stimulus: "Sebuah persegi panjang memiliki keliling 54 cm. Panjangnya 5 cm lebih dari lebarnya.",
+        q: "Berapa panjang persegi panjang itu?",
+        opt: ["15 cm","16 cm","17 cm","18 cm"], a: 1 },
+      { stimulus: "Andi menabung Rp 5.000 per hari. Setelah 18 hari, ia memakai Rp 25.000 untuk membeli buku.",
+        q: "Berapa sisa tabungan Andi?",
+        opt: ["Rp 55.000","Rp 60.000","Rp 65.000","Rp 70.000"], a: 2 },
+      { stimulus: "Sebuah data tinggi badan (cm): 140, 145, 142, 145, 148, 142, 145.",
+        q: "Modus data tersebut adalah...",
+        opt: ["140","142","145","148"], a: 2 },
+      { stimulus: "Siti membeli kain 3 1/2 meter. Ia memakai 1 3/4 meter untuk membuat baju.",
+        q: "Sisa kain Siti adalah...",
+        opt: ["1 1/4 m","1 1/2 m","1 3/4 m","2 1/4 m"], a: 2 }
+    ];
+
+    const defaultIndoHOTS = [
+      { stimulus: "Hutan bakau memiliki akar tunjang yang kuat dan rapat. Akar-akar ini berfungsi untuk menahan hantam ombak laut agar tidak mengikis daratan. Selain itu, hutan bakau juga menjadi tempat tinggal bagi kepiting, udang, dan ikan-ikan kecil untuk berlindung dari predator.",
+        q: "Berdasarkan paragraf di atas, apa yang akan terjadi jika hutan bakau dirusak oleh manusia?",
+        opt: ["Populasi ikan kecil akan meningkat pesat.","Terjadinya abrasi pantai karena tidak ada penahan ombak.","Air laut akan menjadi lebih jernih.","Nelayan akan lebih mudah menangkap ikan besar."], a: 1 },
+      { stimulus: "Bacalah kutipan cerita berikut: 'Rara menatap nanar pecahan vas bunga kesayangan Ibu di lantai. Jantungnya berdegup kencang. Ia tahu Ibu akan pulang sebentar lagi. Rara segera mengambil sapu, membersihkan pecahan itu, dan menyiapkan teh hangat kesukaan Ibu. Saat Ibu pulang, Rara langsung memeluk kaki Ibu dan menceritakan semuanya dengan jujur.'",
+        q: "Watak tokoh Rara dalam kutipan cerita tersebut adalah...",
+        opt: ["Pemarah namun rajin","Penakut dan pembohong","Bertanggung jawab dan jujur","Cerdik dan suka mencari alasan"], a: 2 },
+      { stimulus: "Istilah 'Global Warming' sering kita dengar di berita. Fenomena ini menyebabkan suhu bumi meningkat, es di kutub mencair, dan cuaca menjadi tidak menentu.",
+        q: "Padanan kata baku dalam Bahasa Indonesia untuk istilah 'Global Warming' adalah...",
+        opt: ["Pemanasan Global","Panas Dunia","Efek Rumah Kaca","Perubahan Iklim"], a: 0 },
+      { stimulus: "Setiap pagi, Pak Arif menyiram tanaman di halaman. Ia melakukannya agar tanaman tidak layu. Saat musim hujan, Pak Arif menyiram lebih jarang karena tanah sudah lembap.",
+        q: "Gagasan pokok paragraf tersebut adalah...",
+        opt: ["Pak Arif selalu bangun pagi.","Tanaman akan tumbuh tanpa disiram.","Pak Arif merawat tanaman dengan menyiram sesuai kondisi cuaca.","Musim hujan membuat halaman menjadi kering."], a: 2 },
+      { stimulus: "Dalam sebuah lomba, Dina tidak menjadi juara. Namun, Dina tetap tersenyum dan memberi selamat kepada pemenang. Ia berkata, 'Aku akan berlatih lebih tekun.'",
+        q: "Sikap Dina menunjukkan bahwa ia...",
+        opt: ["Sombong","Pantang menyerah","Iri hati","Mudah putus asa"], a: 1 },
+      { stimulus: "Poster: 'Kurangi Sampah Plastik! Bawa tumbler dan tas belanja sendiri. Mulai dari kita, bumi lebih sehat.'",
+        q: "Tujuan poster tersebut adalah...",
+        opt: ["Mengajak orang membuang sampah sembarangan","Memberi informasi jadwal belanja","Mengimbau masyarakat mengurangi penggunaan plastik","Mempromosikan produk tas baru"], a: 2 },
+      { stimulus: "Udin membaca buku 20 halaman setiap hari. Ia ingin menamatkan buku 200 halaman sebelum akhir pekan.",
+        q: "Kalimat tanya yang tepat untuk informasi tersebut adalah...",
+        opt: ["Siapa yang menulis buku itu?","Berapa hari Udin membutuhkan untuk menamatkan buku?","Di mana Udin membeli buku?","Mengapa Udin tidak membaca?"], a: 1 },
+      { stimulus: "'Jangan menilai seseorang dari penampilannya, karena hati dan tindakanlah yang menunjukkan siapa dirinya.'",
+        q: "Makna pesan tersebut adalah...",
+        opt: ["Penampilan selalu buruk","Kita harus menilai orang dari kebaikan dan perbuatannya","Semua orang harus berpakaian sama","Hati tidak penting"], a: 1 },
+      { stimulus: "Teks: 'Kupu-kupu mengalami metamorfosis sempurna: telur, larva (ulat), pupa (kepompong), lalu imago (dewasa).'",
+        q: "Urutan metamorfosis yang benar adalah...",
+        opt: ["Larva–telur–pupa–imago","Telur–larva–pupa–imago","Telur–pupa–larva–imago","Imago–pupa–larva–telur"], a: 1 },
+      { stimulus: "Saat listrik padam, warga menyalakan lilin. Ketua RT mengingatkan agar lilin dijauhkan dari benda mudah terbakar.",
+        q: "Penyebab ketua RT memberi peringatan adalah untuk mencegah...",
+        opt: ["Banjir","Kebakaran","Gempa","Pencurian"], a: 1 },
+      { stimulus: "Beni membawa payung meskipun langit tampak cerah. Ia melihat ramalan cuaca yang menyebutkan kemungkinan hujan sore hari.",
+        q: "Alasan Beni membawa payung adalah...",
+        opt: ["Ia ingin bermain hujan","Ia takut panas","Ia berjaga-jaga karena ada kemungkinan hujan","Payung itu hadiah"], a: 2 },
+      { stimulus: "'Ayo kita kerja bakti hari Minggu pukul 07.00. Bawa alat kebersihan masing-masing.'",
+        q: "Informasi yang TIDAK terdapat pada pengumuman adalah...",
+        opt: ["Hari kegiatan","Waktu kegiatan","Tempat kegiatan","Barang yang perlu dibawa"], a: 2 },
+      { stimulus: "Teks: 'Sampah organik dapat diolah menjadi kompos. Kompos bermanfaat menyuburkan tanah.'",
+        q: "Kesimpulan yang tepat adalah...",
+        opt: ["Kompos membuat tanah kurang subur","Sampah organik tidak berguna","Sampah organik bisa dimanfaatkan untuk menyuburkan tanah","Kompos hanya untuk hiasan"], a: 2 },
+      { stimulus: "'Rani menutup buku pelajaran lalu membantu adiknya mengerjakan PR. Setelah itu, Rani kembali belajar.'",
+        q: "Urutan kegiatan Rani yang benar adalah...",
+        opt: ["Belajar–membantu adik–menutup buku","Menutup buku–membantu adik–kembali belajar","Membantu adik–menutup buku–belajar","Kembali belajar–membantu adik–menutup buku"], a: 1 },
+      { stimulus: "Dalam teks cerita, tokoh utama sering disebut 'ia' dan 'dia' untuk menghindari pengulangan nama.",
+        q: "Kata 'ia' dan 'dia' termasuk...",
+        opt: ["Kata depan","Kata ganti orang","Kata kerja","Kata bilangan"], a: 1 },
+      { stimulus: "'Air sungai menjadi keruh setelah hujan deras. Banyak sampah terbawa arus.'",
+        q: "Hubungan sebab-akibat pada teks tersebut adalah...",
+        opt: ["Sungai keruh karena hujan deras membawa sampah","Hujan deras karena sungai keruh","Sampah muncul karena sungai jernih","Arus berhenti karena hujan"], a: 0 },
+      { stimulus: "Teks: 'Siswa diminta membawa botol minum sendiri agar mengurangi sampah gelas plastik di sekolah.'",
+        q: "Ide utama teks tersebut adalah...",
+        opt: ["Siswa suka minum","Sekolah menjual plastik","Mengurangi sampah plastik dengan membawa botol sendiri","Botol minum harus mahal"], a: 2 },
+      { stimulus: "'Walaupun lelah, Tono tetap berlatih karena ia ingin tampil baik saat pertandingan.'",
+        q: "Kata hubung yang menunjukkan pertentangan adalah...",
+        opt: ["karena","walaupun","saat","tetap"], a: 1 },
+      { stimulus: "'Ibu menanam cabai di pot. Setiap dua hari sekali, Ibu memberi pupuk. Cabai tumbuh subur.'",
+        q: "Kalimat simpulan yang tepat adalah...",
+        opt: ["Cabai tidak perlu pupuk","Cabai tumbuh subur karena dirawat dan diberi pupuk","Cabai hanya tumbuh di sawah","Pupuk membuat cabai layu"], a: 1 },
+      { stimulus: "Bacaan: 'Di desa Suka Maju, warga membuat bank sampah. Warga menabung sampah anorganik dan mendapat poin yang bisa ditukar sembako.'",
+        q: "Manfaat bank sampah bagi warga adalah...",
+        opt: ["Menambah sampah di sungai","Membuat warga malas","Sampah bernilai dan bisa ditukar kebutuhan","Mengurangi kegiatan warga"], a: 2 },
+      { stimulus: "'Ayah berkata, “Kita harus hemat listrik. Matikan lampu jika tidak digunakan.”'",
+        q: "Kalimat tersebut termasuk...",
+        opt: ["Kalimat langsung","Kalimat tidak langsung","Kalimat perintah dalam bentuk laporan","Kalimat tanya"], a: 0 },
+      { stimulus: "Teks: 'Banjir terjadi karena selokan tersumbat dan banyak sampah. Warga lalu membersihkan selokan bersama-sama.'",
+        q: "Tindakan warga merupakan contoh...",
+        opt: ["Menghindari masalah","Kerja sama/gotong royong","Membuat sampah baru","Menyalahkan orang lain"], a: 1 },
+      { stimulus: "'Doni membawa bekal dari rumah agar tidak jajan sembarangan di luar.'",
+        q: "Makna kata 'sembarangan' pada kalimat tersebut adalah...",
+        opt: ["teratur","asal-asalan/tidak terkontrol","hemat","bersih"], a: 1 },
+      { stimulus: "Teks: 'Pohon menghasilkan oksigen. Karena itu, menanam pohon membantu menjaga kualitas udara.'",
+        q: "Kesimpulan yang tepat adalah...",
+        opt: ["Udara tidak butuh oksigen","Menanam pohon penting untuk udara yang lebih baik","Pohon menghabiskan udara","Menanam pohon membuat panas"], a: 1 },
+      { stimulus: "'Sinta membaca teks dua kali. Pertama untuk memahami isi, kedua untuk menemukan informasi penting.'",
+        q: "Strategi Sinta menunjukkan bahwa ia...",
+        opt: ["Tidak suka membaca","Membaca tanpa tujuan","Membaca dengan teknik agar memahami isi dan detail","Membaca hanya karena disuruh"], a: 2 },
+      { stimulus: "Teks: 'Kereta datang terlambat. Akibatnya, beberapa penumpang terlambat sampai kantor.'",
+        q: "Kata 'akibatnya' menunjukkan...",
+        opt: ["Waktu","Tempat","Sebab-akibat","Perbandingan"], a: 2 },
+      { stimulus: "'Riko menolak ajakan teman untuk mencontek. Ia memilih belajar walau nilainya belum tinggi.'",
+        q: "Nilai moral yang dapat diambil adalah...",
+        opt: ["Mencontek itu wajar","Kejujuran lebih penting daripada nilai tinggi","Belajar tidak perlu","Teman harus selalu dituruti"], a: 1 },
+      { stimulus: "Teks: 'Air bersih semakin sulit. Salah satu cara menghemat air adalah menutup keran saat menyikat gigi.'",
+        q: "Tujuan penulis adalah...",
+        opt: ["Mengajak menghemat air","Mengajak boros air","Membahas olahraga","Mempromosikan keran mahal"], a: 0 },
+      { stimulus: "'Jika kamu ingin cepat selesai, buatlah rencana belajar dan patuhi jadwalnya.'",
+        q: "Kalimat tersebut termasuk saran karena menggunakan kata...",
+        opt: ["jika","ingin","buatlah","dan"], a: 2 },
+      { stimulus: "Teks: 'Matahari terbit di timur. Pada pagi hari, bayangan benda cenderung memanjang ke arah barat.'",
+        q: "Jika sebuah tiang berdiri pada pagi hari, bayangannya mengarah ke...",
+        opt: ["Timur","Barat","Utara","Selatan"], a: 1 }
+    ];
+
+// =========================
+// NORMALISASI BANK SOAL & TIPE SOAL
+// =========================
+const EXAM_BLUEPRINT = {
+  matematika: { mc: 15, mcc: 5, tf: 5 }, // total 25
+  bahasa: { mc: 20, mcc: 5, tf: 5 }      // total 30
+};
+
+function normalizeQuestion(q) {
+  const qq = Object.assign({}, q || {});
+  if (!qq.type) {
+    if (Array.isArray(qq.statements)) qq.type = "tf";
+    else if (Array.isArray(qq.a_multi)) qq.type = "mcc";
+    else qq.type = "mc";
+  }
+
+  qq.stimulus = (qq.stimulus === undefined || qq.stimulus === null) ? "-" : qq.stimulus;
+
+  // kompatibilitas: img (lama) = stimulus_img
+  qq.stimulus_img = (qq.stimulus_img === undefined || qq.stimulus_img === null) ? (qq.img || "") : qq.stimulus_img;
+  qq.question_img = (qq.question_img === undefined || qq.question_img === null) ? (qq.q_img || "") : qq.question_img;
+
+  // simpan juga field lama agar tidak merusak kode lain
+  qq.img = qq.stimulus_img || "";
+  qq.q_img = qq.question_img || "";
+
+  qq.q = (qq.q === undefined || qq.q === null) ? "" : qq.q;
+
+  // option images
+  if (!Array.isArray(qq.opt_img)) qq.opt_img = Array.isArray(qq.optionImages) ? qq.optionImages : [];
+  qq.opt_img = Array.isArray(qq.opt_img) ? qq.opt_img.slice(0, 5).map(v => (v === null || v === undefined) ? "" : String(v)) : [];
+
+  // TF pernyataan image
+  if (!Array.isArray(qq.tf_img)) qq.tf_img = Array.isArray(qq.tf_images) ? qq.tf_images : [];
+  qq.tf_img = Array.isArray(qq.tf_img) ? qq.tf_img.slice(0, 4).map(v => (v === null || v === undefined) ? "" : String(v)) : [];
+
+  if (qq.type === "mc") {
+    qq.opt = Array.isArray(qq.opt) ? qq.opt.slice(0, 4) : [];
+    qq.opt_img = qq.opt_img.slice(0, 4);
+
+    qq.a = Number.isFinite(qq.a) ? qq.a : parseInt(String(qq.a ?? "0"), 10);
+    if (!Number.isFinite(qq.a) || qq.a < 0) qq.a = 0;
+
+    while (qq.opt.length < 4) qq.opt.push("");
+    while (qq.opt_img.length < 4) qq.opt_img.push("");
+
+  } else if (qq.type === "mcc") {
+    qq.opt = Array.isArray(qq.opt) ? qq.opt.slice(0, 5) : [];
+    qq.opt_img = qq.opt_img.slice(0, 5);
+
+    if (!Array.isArray(qq.a_multi)) {
+      if (Array.isArray(qq.a)) qq.a_multi = qq.a;
+      else if (Number.isFinite(qq.a)) qq.a_multi = [qq.a];
+      else qq.a_multi = [];
+    }
+    const cleaned = (qq.a_multi || []).map(v => parseInt(String(v), 10)).filter(v => Number.isFinite(v) && v >= 0 && v < 5);
+    qq.a_multi = Array.from(new Set(cleaned)).slice(0, 3);
+
+    while (qq.opt.length < 5) qq.opt.push("");
+    while (qq.opt_img.length < 5) qq.opt_img.push("");
+
+  } else if (qq.type === "tf") {
+    qq.statements = Array.isArray(qq.statements) ? qq.statements.slice(0, 4) : [];
+    // minimal 3 pernyataan
+    if (qq.statements.length < 3) {
+      while (qq.statements.length < 3) qq.statements.push("");
+    }
+
+    // samakan panjang tf_img dengan statements
+    while (qq.tf_img.length < qq.statements.length) qq.tf_img.push("");
+    qq.tf_img = qq.tf_img.slice(0, qq.statements.length);
+
+    qq.a_tf = Array.isArray(qq.a_tf) ? qq.a_tf : [];
+    qq.a_tf = qq.a_tf.map(v => (v === true || v === "true" || v === 1 || v === "1")).slice(0, qq.statements.length);
+    while (qq.a_tf.length < qq.statements.length) qq.a_tf.push(false);
+
+  } else {
+    // fallback ke PG
+    qq.type = "mc";
+    qq.opt = Array.isArray(qq.opt) ? qq.opt.slice(0, 4) : [];
+    qq.opt_img = qq.opt_img.slice(0, 4);
+    while (qq.opt.length < 4) qq.opt.push("");
+    while (qq.opt_img.length < 4) qq.opt_img.push("");
+    qq.a = 0;
+  }
+
+  return qq;
+}
+
+function normalizeBank(bank) {
+  return (Array.isArray(bank) ? bank : []).map(normalizeQuestion);
+}
+
+function blueprintTotal(mapel) {
+  const bp = EXAM_BLUEPRINT[mapel] || { mc: 0, mcc: 0, tf: 0 };
+  return (bp.mc || 0) + (bp.mcc || 0) + (bp.tf || 0);
+}
+
+    // Bank soal yang bisa diubah guru (tersimpan di localStorage).
+    // Jika tidak ada di localStorage, maka memakai bank default di bawah.
+    let mathHOTS = normalizeBank(JSON.parse(localStorage.getItem("cbtQuestionBank_matematika") || "null") || JSON.parse(JSON.stringify(defaultMathHOTS)));
+    let indoHOTS = normalizeBank(JSON.parse(localStorage.getItem("cbtQuestionBank_bahasa") || "null") || JSON.parse(JSON.stringify(defaultIndoHOTS)));
+
+    let currentQuestions = [];
+    let userAnswers = {};
+    let flags = {};
+    let currentIndex = 0;
+    let timerInterval;
+    let timeRemaining = 3600;
+
+    // snapshot terakhir untuk fitur review jawaban siswa
+    let lastReviewPayload = null;
+
+
+    // cache hasil untuk fitur download (diisi saat renderTeacherTable)
+    let teacherResultsCache = [];
+
+    // sorting & mode
+    let sortState = { key: "waktu", dir: "desc" };
+
+    // Pagination + Search (Guru / Guru Tamu)
+    const PAGE_SIZE = 20;                 // tampilkan 20 siswa per halaman
+    let teacherPage = 1;
+    let teacherSearchQuery = "";
+    let teacherResultsAll = [];           // semua data (untuk download)
+    let teacherResultsView = [];          // data hasil filter (untuk tabel)
+
+    // Firestore fetch limits (ambil sampai 10.000 data historis)
+    const FIRESTORE_MAX_RESULTS = 10000;
+    const FIRESTORE_BATCH_SIZE = 500;
+
+
+    let isGuestTeacher = false;
+    // Kode akses untuk mode Guru Tamu (ubah sesuai kebutuhan)
+    const GUEST_TEACHER_ACCESS_CODE = "lihatnilai";
+
+    // edit bank soal
+    let editingQuestionIndex = null;
+
+    // gambar stimulus sementara (diisi dari link atau file upload pada form guru)
+    let pendingStimulusImage = "";
+
+    
+    // =========================
+// RANDOMISASI SOAL SESUAI KOMPOSISI
+// =========================
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+// =========================
+// RANDOMISASI OPSI & PERNYATAAN
+// =========================
+// Atur ke false kalau tidak ingin mengacak.
+// Catatan: pengacakan ini hanya untuk tampilan saat ujian (currentQuestions), tidak mengubah bank soal.
+const SHUFFLE_CHOICES = true;         // untuk MC & MCC
+const SHUFFLE_TF_STATEMENTS = true;   // untuk TF
+
+function shuffledPermutation(n) {
+  const perm = Array.from({ length: n }, (_, i) => i);
+  shuffleInPlace(perm);
+  const inv = Array(n).fill(0);
+  for (let newIdx = 0; newIdx < n; newIdx++) inv[perm[newIdx]] = newIdx; // original -> new
+  return { perm, inv };
+}
+
+function randomizeQuestionInternals(qRaw) {
+  const q = normalizeQuestion(qRaw || {});
+
+  // MC: acak urutan opsi A-D + gambar opsi, remap kunci "a"
+  if (q.type === "mc" && SHUFFLE_CHOICES) {
+    const n = 4;
+    const { perm, inv } = shuffledPermutation(n);
+
+    const oldOpt = Array.isArray(q.opt) ? q.opt.slice(0, n) : Array(n).fill("");
+    const oldImg = Array.isArray(q.opt_img) ? q.opt_img.slice(0, n) : Array(n).fill("");
+
+    q.opt = perm.map(i => oldOpt[i] ?? "");
+    q.opt_img = perm.map(i => oldImg[i] ?? "");
+
+    const oldA = Number.isFinite(q.a) ? q.a : parseInt(String(q.a ?? "0"), 10);
+    q.a = (oldA >= 0 && oldA < n) ? inv[oldA] : 0;
+  }
+
+  // MCC: acak urutan opsi A-E + gambar opsi, remap kunci "a_multi"
+  if (q.type === "mcc" && SHUFFLE_CHOICES) {
+    const n = 5;
+    const { perm, inv } = shuffledPermutation(n);
+
+    const oldOpt = Array.isArray(q.opt) ? q.opt.slice(0, n) : Array(n).fill("");
+    const oldImg = Array.isArray(q.opt_img) ? q.opt_img.slice(0, n) : Array(n).fill("");
+
+    q.opt = perm.map(i => oldOpt[i] ?? "");
+    q.opt_img = perm.map(i => oldImg[i] ?? "");
+
+    const oldKey = Array.isArray(q.a_multi) ? q.a_multi : [];
+    q.a_multi = Array.from(new Set(oldKey
+      .map(i => parseInt(String(i), 10))
+      .filter(i => Number.isFinite(i) && i >= 0 && i < n)
+      .map(orig => inv[orig])
+    )).sort((a,b)=>a-b).slice(0, 3);
+  }
+
+  // TF: acak urutan pernyataan + gambar pernyataan + kunci a_tf agar tetap sejajar
+  if (q.type === "tf" && SHUFFLE_TF_STATEMENTS) {
+    const n = Array.isArray(q.statements) ? q.statements.length : 0;
+    if (n > 1) {
+      const { perm } = shuffledPermutation(n);
+
+      const st = q.statements.slice(0, n);
+      const img = Array.isArray(q.tf_img) ? q.tf_img.slice(0, n) : Array(n).fill("");
+      const key = Array.isArray(q.a_tf) ? q.a_tf.slice(0, n) : Array(n).fill(false);
+
+      q.statements = perm.map(i => st[i] ?? "");
+      q.tf_img = perm.map(i => img[i] ?? "");
+      q.a_tf = perm.map(i => !!key[i]);
+    }
+  }
+
+  return q;
+}
+
+
+function buildExamQuestions(mapel, rawBank) {
+  const bank = normalizeBank(deepCopy(rawBank || []));
+  const bp = EXAM_BLUEPRINT[mapel] || { mc: 0, mcc: 0, tf: 0 };
+  const targetTotal = blueprintTotal(mapel);
+
+  const indices = bank.map((_, i) => i);
+  const groups = { mc: [], mcc: [], tf: [] };
+  indices.forEach(i => {
+    const t = bank[i]?.type || "mc";
+    if (groups[t]) groups[t].push(i);
+    else groups.mc.push(i);
+  });
+  Object.keys(groups).forEach(k => shuffleInPlace(groups[k]));
+
+  const pickedIdx = [];
+  const used = new Set();
+
+  function take(typeKey, n) {
+    const g = groups[typeKey] || [];
+    while (n > 0 && g.length > 0) {
+      const idx = g.pop();
+      if (used.has(idx)) continue;
+      used.add(idx);
+      pickedIdx.push(idx);
+      n--;
+    }
+    return n;
+  }
+
+  let deficit = 0;
+  deficit += take("mc", bp.mc || 0);
+  deficit += take("mcc", bp.mcc || 0);
+  deficit += take("tf", bp.tf || 0);
+
+  if (deficit > 0) {
+    // Top-up dari sisa soal apa pun agar jumlah tetap terpenuhi
+    const pool = indices.filter(i => !used.has(i));
+    shuffleInPlace(pool);
+    while (deficit > 0 && pool.length > 0) {
+      const idx = pool.pop();
+      used.add(idx);
+      pickedIdx.push(idx);
+      deficit--;
+    }
+  }
+
+  const selected = pickedIdx.map(i => bank[i]);
+  shuffleInPlace(selected);
+  const finalSet = selected.slice(0, targetTotal).map(randomizeQuestionInternals);
+  return finalSet;
+}
+
+function toNumberArray(v) {
+  return Array.isArray(v) ? v.map(x => parseInt(String(x), 10)).filter(x => Number.isFinite(x)) : [];
+}
+
+function isSameSet(a, b) {
+  const aa = Array.from(new Set(toNumberArray(a))).sort((x, y) => x - y);
+  const bb = Array.from(new Set(toNumberArray(b))).sort((x, y) => x - y);
+  if (aa.length !== bb.length) return false;
+  for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+  return true;
+}
+
+async function startExam() {
+      const nama = document.getElementById('nama').value.trim();
+      const sekolah = document.getElementById('sekolah').value.trim();
+      const mapel = document.getElementById('mapel').value;
+
+      if (!nama || !sekolah || !mapel) { alert("Data harus lengkap!"); return; }
+
+      const bank = (mapel === 'matematika') ? mathHOTS : indoHOTS;
+      const expected = blueprintTotal(mapel);
+      currentQuestions = buildExamQuestions(mapel, bank);
+
+      if (currentQuestions.length < expected) {
+        alert(`Peringatan: bank soal belum mencukupi untuk komposisi ujian. Dibutuhkan ${expected} soal, tersedia ${currentQuestions.length} soal.`);
+      }
+
+      document.getElementById('student-info-display').innerText = `${nama} - ${sekolah}`;
+      document.getElementById('exam-subject-title').innerText = (mapel === 'matematika') ? "Literasi Numerasi" : "Literasi Membaca";
+
+      userAnswers = {};
+      flags = {};
+      currentIndex = 0;
+
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-exam').classList.remove('hidden');
+
+      renderNavGrid();
+      loadQuestion(0);
+      startTimer();
+    }
+
+    function loadQuestion(index) {
+      currentIndex = index;
+      const qData = normalizeQuestion(currentQuestions[index] || {});
+      currentQuestions[index] = qData; // pastikan ternormalisasi
+
+      const content = document.getElementById('question-content');
+      let bodyHTML = '';
+
+      const stimImgHtml = qData.stimulus_img ? `<img src="${escapeAttr(qData.stimulus_img)}" alt="Gambar stimulus" loading="lazy" referrerpolicy="no-referrer" />` : "";
+      const stimulusText = (qData.stimulus && qData.stimulus !== "-") ? qData.stimulus : "";
+
+      const qImgHtml = qData.question_img ? `<img src="${escapeAttr(qData.question_img)}" alt="Gambar soal" loading="lazy" referrerpolicy="no-referrer" style="margin-top:12px;" />` : "";
+
+      const stimulusHTML = (stimulusText || stimImgHtml)
+        ? `<div class="stimulus-box">${stimulusText}${stimImgHtml}</div>`
+        : "";
+
+      // Render berdasarkan tipe
+      if (qData.type === "mc") {
+        let optionsHTML = '';
+        (qData.opt || []).forEach((opt, i) => {
+          const checked = userAnswers[index] === i ? 'checked' : '';
+          optionsHTML += `
+            <label class="option-item">
+              <input type="radio" name="ans" value="${i}" onclick="saveAnswer(${index}, ${i})" ${checked}>
+              <span>${String.fromCharCode(65 + i)}. ${safeText(opt)}</span>
+            ${(qData.opt_img && qData.opt_img[i]) ? `<img src="${escapeAttr(qData.opt_img[i])}" alt="Gambar opsi ${String.fromCharCode(65+i)}" loading="lazy" referrerpolicy="no-referrer" style="max-width:220px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0; margin-top:8px;" />` : ""}
+            </label>
+          `;
+        });
+
+        bodyHTML = `
+          ${stimulusHTML}
+          <div class="question-text">No ${index + 1}. ${qData.q}</div>${qImgHtml}
+          <div class="options-list">${optionsHTML}</div>
+        `;
+      } else if (qData.type === "mcc") {
+        let optionsHTML = '';
+        const selected = Array.isArray(userAnswers[index]) ? userAnswers[index] : [];
+        (qData.opt || []).forEach((opt, i) => {
+          const checked = selected.includes(i) ? 'checked' : '';
+          optionsHTML += `
+            <label class="option-item" style="align-items:flex-start;">
+              <input type="checkbox" value="${i}" onchange="toggleMultiAnswer(${index}, ${i}, this)" ${checked}>
+              <span>${String.fromCharCode(65 + i)}. ${safeText(opt)}</span>
+            ${(qData.opt_img && qData.opt_img[i]) ? `<img src="${escapeAttr(qData.opt_img[i])}" alt="Gambar opsi ${String.fromCharCode(65+i)}" loading="lazy" referrerpolicy="no-referrer" style="max-width:220px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0; margin-top:8px;" />` : ""}
+            </label>
+          `;
+        });
+
+        bodyHTML = `
+          ${stimulusHTML}
+          <div class="question-text">No ${index + 1}. ${qData.q}</div>${qImgHtml}
+          <div style="color:#64748b; font-size: 12px; margin: -6px 0 12px;">Pilih maksimal <b>3</b> jawaban.</div>
+          <div class="options-list">${optionsHTML}</div>
+        `;
+      } else if (qData.type === "tf") {
+        const n = (qData.statements || []).length;
+        let ansArr = userAnswers[index];
+        if (!Array.isArray(ansArr) || ansArr.length !== n) {
+          ansArr = Array(n).fill(null);
+          userAnswers[index] = ansArr;
+        }
+
+        const statementsHTML = (qData.statements || []).map((st, si) => {
+          const v = ansArr[si];
+          const cTrue = v === true ? "checked" : "";
+          const cFalse = v === false ? "checked" : "";
+          return `
+            <div class="option-item" style="flex-direction:column; align-items:flex-start; gap:10px;">
+              <div style="font-weight:600; line-height:1.4;">${si + 1}. ${safeText(st)}</div>
+              ${ (qData.tf_img && qData.tf_img[si]) ? `<img src="${escapeAttr(qData.tf_img[si])}" alt="Gambar pernyataan ${si+1}" loading="lazy" referrerpolicy="no-referrer" style="max-width:320px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0; background:white;" />` : "" }
+              <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                <label style="display:flex; align-items:center; gap:6px;">
+                  <input type="radio" name="tf-${index}-${si}" onchange="setTFAnswer(${index}, ${si}, true)" ${cTrue}>
+                  Benar
+                </label>
+                <label style="display:flex; align-items:center; gap:6px;">
+                  <input type="radio" name="tf-${index}-${si}" onchange="setTFAnswer(${index}, ${si}, false)" ${cFalse}>
+                  Salah
+                </label>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        bodyHTML = `
+          ${stimulusHTML}
+          <div class="question-text">No ${index + 1}. ${qData.q}</div>${qImgHtml}
+          <div style="color:#64748b; font-size: 12px; margin: -6px 0 12px;">Tentukan Benar/Salah untuk setiap pernyataan.</div>
+          <div class="options-list">${statementsHTML}</div>
+        `;
+      } else {
+        // fallback
+        qData.type = "mc";
+        bodyHTML = `
+          ${stimulusHTML}
+          <div class="question-text">No ${index + 1}. ${qData.q}</div>${qImgHtml}
+          <div style="color:#ef4444;">Tipe soal tidak dikenali. Mohon periksa bank soal.</div>
+        `;
+      }
+
+      content.innerHTML = bodyHTML;
+
+      document.getElementById('btn-prev').disabled = index === 0;
+      document.getElementById('btn-next').classList.toggle('hidden', index === currentQuestions.length - 1);
+      document.getElementById('btn-finish').classList.toggle('hidden', index !== currentQuestions.length - 1);
+
+      updateNavStatus();
+    }
+
+    function saveAnswer(qIdx, optIdx) {
+      userAnswers[qIdx] = optIdx;
+      updateNavStatus();
+    }
+
+    function toggleMultiAnswer(qIdx, optIdx, el) {
+      let arr = userAnswers[qIdx];
+      if (!Array.isArray(arr)) arr = [];
+      const exists = arr.includes(optIdx);
+
+      if (el && el.checked) {
+        if (!exists && arr.length >= 3) {
+          el.checked = false;
+          alert("Maksimal 3 jawaban boleh dipilih.");
+          return;
+        }
+        if (!exists) arr.push(optIdx);
+      } else {
+        // unchecked
+        arr = arr.filter(x => x !== optIdx);
+      }
+
+      // normalisasi unik & urut
+      arr = Array.from(new Set(arr)).sort((a, b) => a - b);
+      userAnswers[qIdx] = arr;
+      updateNavStatus();
+    }
+
+    function setTFAnswer(qIdx, stmtIdx, val) {
+      const q = currentQuestions[qIdx];
+      const n = (q && q.statements) ? q.statements.length : 0;
+      let arr = userAnswers[qIdx];
+      if (!Array.isArray(arr) || arr.length !== n) arr = Array(n).fill(null);
+      arr[stmtIdx] = !!val;
+      userAnswers[qIdx] = arr;
+      updateNavStatus();
+    }
+
+    function toggleFlag() { flags[currentIndex] = !flags[currentIndex]; updateNavStatus(); }
+    function prevQuestion() { if (currentIndex > 0) loadQuestion(currentIndex - 1); }
+    function nextQuestion() { if (currentIndex < currentQuestions.length - 1) loadQuestion(currentIndex + 1); }
+
+    function renderNavGrid() {
+      const grid = document.getElementById('nav-grid');
+      grid.innerHTML = '';
+      currentQuestions.forEach((_, i) => {
+        const btn = document.createElement('div');
+        btn.className = 'nav-item';
+        btn.innerText = i + 1;
+        btn.id = `nav-${i}`;
+        btn.onclick = () => loadQuestion(i);
+        grid.appendChild(btn);
+      });
+    }
+
+    function updateNavStatus() {
+  currentQuestions.forEach((qRaw, i) => {
+    const q = normalizeQuestion(qRaw || {});
+    const nav = document.getElementById(`nav-${i}`);
+    if (!nav) return;
+
+    const ans = userAnswers[i];
+    let answered = false;
+
+    if (q.type === "mc") {
+      answered = ans !== undefined && ans !== null;
+    } else if (q.type === "mcc") {
+      answered = Array.isArray(ans) && ans.length > 0;
+    } else if (q.type === "tf") {
+      answered = Array.isArray(ans) && Array.isArray(q.statements) && ans.length === q.statements.length && ans.every(v => v === true || v === false);
+    } else {
+      answered = ans !== undefined && ans !== null;
+    }
+
+    nav.classList.toggle('active', i === currentIndex);
+    nav.classList.toggle('answered', answered);
+    nav.classList.toggle('flagged', !!flags[i]);
+  });
+}
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeRemaining = 3600;
+      renderTimer();
+
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        renderTimer();
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          finishExam(true);
+        }
+      }, 1000);
+    }
+
+    function renderTimer() {
+      const m = Math.floor(timeRemaining / 60);
+      const s = timeRemaining % 60;
+      document.getElementById('timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function finishExam(isAuto = false) {
+      if (!isAuto) {
+        const ok = confirm("Yakin ingin selesai dan mengumpulkan jawaban?");
+        if (!ok) return;
+      }
+
+      clearInterval(timerInterval);
+
+      
+let points = 0;
+      let correct = 0;
+
+      currentQuestions.forEach((qRaw, idx) => {
+        const q = normalizeQuestion(qRaw || {});
+        const ans = userAnswers[idx];
+        let credit = 0;
+
+        if (q.type === "mc") {
+          credit = (ans === q.a) ? 1 : 0;
+
+        } else if (q.type === "mcc") {
+          credit = (isSameSet(ans, q.a_multi)) ? 1 : 0;
+
+        } else if (q.type === "tf") {
+          const n = Array.isArray(q.statements) ? q.statements.length : 0;
+          if (n > 0) {
+            const key = Array.isArray(q.a_tf) ? q.a_tf : [];
+            const arr = Array.isArray(ans) ? ans : [];
+            let correctItems = 0;
+            for (let i = 0; i < n; i++) {
+              if (arr[i] === key[i]) correctItems++;
+            }
+            credit = (correctItems / n); // 0..1
+          }
+
+        } else {
+          credit = (ans === q.a) ? 1 : 0;
+        }
+
+        points += credit;
+        if (credit === 1) correct += 1; // benar penuh per-soal
+      });
+
+      const total = currentQuestions.length;
+      const score = total ? Math.round((points / total) * 100) : 0;
+
+      document.getElementById('view-exam').classList.add('hidden');
+      document.getElementById('view-result').classList.remove('hidden');
+      document.getElementById('final-score').innerText = score;
+
+      let feedback = "";
+      if (score >= 85) feedback = "Mantap! Pemahamanmu sangat baik. Pertahankan ya! 💪";
+      else if (score >= 70) feedback = "Bagus! Tinggal sedikit lagi untuk lebih hebat. 🔥";
+      else if (score >= 50) feedback = "Cukup! Ayo latihan lagi supaya makin paham. 📘";
+      else feedback = "Jangan menyerah. Coba belajar pelan-pelan dan ulangi latihan. 🌱";
+
+      if (isAuto) feedback = "Waktu habis. " + feedback;
+
+      document.getElementById('feedback-text').innerText = `Benar: ${correct} dari ${total}. ${feedback}`;
+
+      const nama = document.getElementById('nama').value.trim() || "-";
+      const sekolah = document.getElementById('sekolah').value.trim() || "-";
+      const mapel = document.getElementById('mapel').value || "-";
+      const waktu = new Date().toISOString();
+
+      const resultData = { waktu, nama, sekolah, mapel, score };
+      // siapkan data review jawaban (tanpa pembahasan)
+      try {
+        lastReviewPayload = {
+          nama, sekolah, mapel, waktu,
+          score, correct, total,
+          questions: deepCopy(currentQuestions),
+          answers: deepCopy(userAnswers)
+        };
+        const rb = document.getElementById("btn-review");
+        if (rb) rb.disabled = false;
+      } catch (e) { console.warn("Review payload error:", e); }
+
+
+      const key = "cbtResults";
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      existing.unshift(resultData);
+      localStorage.setItem(key, JSON.stringify(existing));
+
+      if (db) {
+        db.collection("results").add({
+          ...resultData,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.error("Firestore save error:", err));
+      }
+    }
+
+    // =========================
+    // REVIEW JAWABAN (Siswa)
+    // =========================
+    function showReview() {
+      if (!lastReviewPayload) {
+        alert("Data review belum tersedia.");
+        return;
+      }
+      document.getElementById('view-result').classList.add('hidden');
+      document.getElementById('view-review').classList.remove('hidden');
+      renderReview();
+    }
+
+    function backToResult() {
+      document.getElementById('view-review').classList.add('hidden');
+      document.getElementById('view-result').classList.remove('hidden');
+    }
+
+    function fmtLetter(i) {
+      if (i === null || i === undefined) return "-";
+      if (!Number.isFinite(Number(i))) return "-";
+      return String.fromCharCode(65 + Number(i));
+    }
+
+    function joinLetters(arr) {
+      const a = Array.isArray(arr) ? arr : [];
+      if (!a.length) return "-";
+      return a.map(i => ["A","B","C","D","E"][Number(i)] || "?").join(", ");
+    }
+
+    function renderReview() {
+      const meta = document.getElementById("review-meta");
+      const wrap = document.getElementById("review-list");
+      if (!wrap) return;
+
+      const p = lastReviewPayload || {};
+      if (meta) {
+        const mapelLabel = p.mapel === "matematika" ? "Literasi Numerasi" : (p.mapel === "bahasa" ? "Literasi Membaca" : (p.mapel || "-"));
+        meta.textContent = `${p.nama || "-"} • ${p.sekolah || "-"} • ${mapelLabel} • Nilai ${p.score ?? "-"} • Benar penuh ${p.correct ?? "-"} / ${p.total ?? "-"}`;
+      }
+
+      const questions = normalizeBank(p.questions || []);
+      const answers = p.answers || {};
+
+      const cards = questions.map((qRaw, idx) => {
+        const q = normalizeQuestion(qRaw || {});
+        const ans = answers[idx];
+
+        // badge benar/salah
+        let isCorrect = false;
+
+        if (q.type === "mc") {
+          isCorrect = (ans === q.a);
+
+        } else if (q.type === "mcc") {
+          isCorrect = isSameSet(ans, q.a_multi);
+
+        } else if (q.type === "tf") {
+          const n = Array.isArray(q.statements) ? q.statements.length : 0;
+          const key = Array.isArray(q.a_tf) ? q.a_tf : [];
+          const arr = Array.isArray(ans) ? ans : [];
+          isCorrect = (n > 0) && (arr.length === n) && arr.every((v, i) => v === key[i]);
+        } else {
+          isCorrect = (ans === q.a);
+        }
+
+        const badge = isCorrect
+          ? `<span class="badge-ok">BENAR</span>`
+          : `<span class="badge-bad">SALAH</span>`;
+
+        const stimImgHtml = q.stimulus_img ? `<img src="${escapeAttr(q.stimulus_img)}" alt="Gambar stimulus" loading="lazy" referrerpolicy="no-referrer" style="margin-top:10px; max-width:520px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0;" />` : "";
+        const stimulusText = (q.stimulus && q.stimulus !== "-") ? q.stimulus : "";
+        const stimulusHTML = (stimulusText || stimImgHtml)
+          ? `<div style="background:#f8fafc; padding:12px; border-left:4px solid var(--primary); border-radius:10px; margin-top:10px; color:#334155; line-height:1.6;">
+               ${safeText(stimulusText)}${stimImgHtml}
+             </div>`
+          : "";
+
+        const qImgHtml = q.question_img ? `<img src="${escapeAttr(q.question_img)}" alt="Gambar soal" loading="lazy" referrerpolicy="no-referrer" style="margin-top:10px; max-width:520px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0;" />` : "";
+
+        let detail = "";
+
+        if (q.type === "mc") {
+          const your = (ans === null || ans === undefined) ? "-" : `${fmtLetter(ans)}. ${safeText(q.opt?.[ans] ?? "")}`;
+          const key = `${fmtLetter(q.a)}. ${safeText(q.opt?.[q.a] ?? "")}`;
+
+          detail = `
+            <div class="review-kv">
+              <div style="color:#64748b;">Jawaban kamu</div><div class="review-answer">${your}</div>
+              <div style="color:#64748b;">Kunci benar</div><div class="review-answer">${key}</div>
+            </div>
+          `;
+
+        } else if (q.type === "mcc") {
+          const your = Array.isArray(ans) && ans.length ? joinLetters(ans) : "-";
+          const key = joinLetters(q.a_multi);
+
+          detail = `
+            <div class="review-kv">
+              <div style="color:#64748b;">Jawaban kamu</div><div class="review-answer">${your}</div>
+              <div style="color:#64748b;">Kunci benar</div><div class="review-answer">${key}</div>
+            </div>
+          `;
+
+        } else if (q.type === "tf") {
+          const st = Array.isArray(q.statements) ? q.statements : [];
+          const key = Array.isArray(q.a_tf) ? q.a_tf : [];
+          const arr = Array.isArray(ans) ? ans : [];
+
+          const rows = st.map((s, i) => {
+            const your = (arr[i] === true) ? "Benar" : (arr[i] === false ? "Salah" : "-");
+            const k = (key[i] === true) ? "Benar" : "Salah";
+            const ok = (arr[i] === key[i]);
+            const b = ok ? `<span class="badge-ok" style="font-size:11px; padding:1px 8px;">OK</span>` : `<span class="badge-bad" style="font-size:11px; padding:1px 8px;">X</span>`;
+            const img = (q.tf_img && q.tf_img[i]) ? `<img src="${escapeAttr(q.tf_img[i])}" alt="Gambar pernyataan ${i+1}" loading="lazy" referrerpolicy="no-referrer" style="margin-top:8px; max-width:520px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0;" />` : "";
+            return `
+              <div style="border-top:1px dashed #e2e8f0; padding-top:10px; margin-top:10px;">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                  <div style="font-weight:700;">${i+1}. ${safeText(s)}</div>
+                  ${b}
+                </div>
+                ${img}
+                <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:8px; color:#334155;">
+                  <div><span style="color:#64748b;">Jawaban kamu:</span> <b>${your}</b></div>
+                  <div><span style="color:#64748b;">Kunci benar:</span> <b>${k}</b></div>
+                </div>
+              </div>
+            `;
+          }).join("");
+
+          detail = `<div style="margin-top:10px;">${rows}</div>`;
+        }
+
+        return `
+          <div class="review-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+              <div style="font-weight:800; font-size:16px;">No ${idx + 1}. ${safeText(q.q || "-")}</div>
+              ${badge}
+            </div>
+            ${qImgHtml}
+            ${stimulusHTML}
+            ${detail}
+          </div>
+        `;
+      }).join("");
+
+      wrap.innerHTML = cards || `<div style="color:#64748b;">Tidak ada data.</div>`;
+    }
+
+
+
+    function showTeacherLogin() {
+      setTeacherMode(false);
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-teacher').classList.remove('hidden');
+      document.getElementById('teacher-login-form').classList.remove('hidden');
+      document.getElementById('teacher-data').classList.add('hidden');
+    }
+    function setTeacherMode(guest) {
+      isGuestTeacher = !!guest;
+
+      const qb = document.getElementById("question-bank-section");
+      const dl = document.getElementById("teacher-download-section");
+
+      // Guru tamu: sembunyikan kelola bank soal, tapi tetap boleh unduh Excel
+      if (qb) qb.classList.toggle("hidden", isGuestTeacher);
+
+      if (dl) {
+        dl.classList.remove("hidden");
+        const csvBtn  = document.getElementById("btn-dl-csv");
+        const jsonBtn = document.getElementById("btn-dl-json");
+        const xlsxBtn = document.getElementById("btn-dl-xlsx");
+
+        // Guest: hanya tampilkan tombol Excel
+        if (csvBtn)  csvBtn.classList.toggle("hidden", isGuestTeacher);
+        if (jsonBtn) jsonBtn.classList.toggle("hidden", isGuestTeacher);
+        if (xlsxBtn) xlsxBtn.classList.remove("hidden");
+      }
+    }
+
+    function showGuestTeacher() {
+      // Mode guru tamu: hanya lihat hasil + sorting (tanpa kelola soal & tanpa download)
+      const code = prompt("Masukkan kode akses Guru Tamu:");
+      if (code === null) return; // batal
+      if (code !== GUEST_TEACHER_ACCESS_CODE) { alert("Kode akses salah!"); return; }
+
+      setTeacherMode(true);
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-teacher').classList.remove('hidden');
+      document.getElementById('teacher-login-form').classList.add('hidden');
+      document.getElementById('teacher-data').classList.remove('hidden');
+      startTeacherResultsListener();
+    }
+
+
+    function loginGuru() {
+      const pass = document.getElementById('guru-pass').value;
+      if (pass !== "clarakers") { alert("Password salah!"); return; }
+      document.getElementById('teacher-login-form').classList.add('hidden');
+      document.getElementById('teacher-data').classList.remove('hidden');
+      startTeacherResultsListener();
+      // tampilkan bank soal default saat pertama masuk
+      setTimeout(() => renderQuestionManager(), 0);
+    }
+    
+    async function fetchFirestoreResultsBatched(maxResults = FIRESTORE_MAX_RESULTS) {
+      const rows = [];
+      if (!db) return rows;
+
+      let lastDoc = null;
+
+      while (rows.length < maxResults) {
+        let q = db.collection("results").orderBy("createdAt", "desc").limit(FIRESTORE_BATCH_SIZE);
+        if (lastDoc) q = q.startAfter(lastDoc);
+
+        // eslint-disable-next-line no-await-in-loop
+        const snap = await q.get();
+        if (!snap || snap.empty) break;
+
+        snap.forEach(doc => {
+          const d = doc.data() || {};
+          d.__id = doc.id; // untuk dedupe
+          rows.push(d);
+        });
+
+        lastDoc = snap.docs[snap.docs.length - 1];
+        if (!lastDoc) break;
+
+        if (snap.size < FIRESTORE_BATCH_SIZE) break;
+      }
+
+      return rows.slice(0, maxResults);
+    }
+
+    function mergeLatestResults(all, latest) {
+      const map = new Map();
+      (Array.isArray(all) ? all : []).forEach(x => {
+        if (x && x.__id) map.set(x.__id, x);
+      });
+      (Array.isArray(latest) ? latest : []).forEach(x => {
+        if (x && x.__id) map.set(x.__id, x);
+      });
+      return Array.from(map.values());
+    }
+
+    function startTeacherResultsListener() {
+      if (typeof unsubscribeResults === "function") {
+        try { unsubscribeResults(); } catch (e) {}
+      }
+      unsubscribeResults = null;
+
+      const localFallback = () => {
+        const local = JSON.parse(localStorage.getItem("cbtResults") || "[]");
+        renderTeacherTable(local);
+      };
+
+      if (!db) {
+        localFallback();
+        return;
+      }
+
+      fetchFirestoreResultsBatched(FIRESTORE_MAX_RESULTS)
+        .then(rows => { renderTeacherTable(rows); })
+        .catch(err => { console.error("Firestore load (batched) error:", err); localFallback(); });
+
+      unsubscribeResults = db.collection("results")
+        .orderBy("createdAt", "desc")
+        .limit(200)
+        .onSnapshot(snapshot => {
+          const latest = [];
+          snapshot.forEach(doc => {
+            const d = doc.data() || {};
+            d.__id = doc.id;
+            latest.push(d);
+          });
+
+          teacherResultsAll = mergeLatestResults(teacherResultsAll, latest);
+          teacherResultsCache = teacherResultsAll;
+          renderTeacherTable(undefined, true);
+        }, err => {
+          console.error("Firestore realtime error:", err);
+          localFallback();
+        });
+    }
+
+    function loadTeacherData() {
+      startTeacherResultsListener();
+    }
+
+
+    
+    function setSort(key) {
+      if (!key) return;
+
+      if (sortState.key === key) {
+        sortState.dir = (sortState.dir === "asc" ? "desc" : "asc");
+      } else {
+        sortState.key = key;
+        sortState.dir = (key === "waktu" ? "desc" : "asc"); // default
+      }
+
+      updateSortIndicators();
+      renderTeacherTable(teacherResultsCache, false);
+    }
+
+    // Collator untuk pengurutan alfabet (lebih natural untuk Bahasa Indonesia)
+    const resultsCollator = new Intl.Collator('id', { sensitivity: 'base', numeric: true });
+
+    function normalizeScore(v) {
+      if (v === null || v === undefined || v === "") return null;
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+
+      const s = String(v).trim();
+      // dukung format: "80", "80.5", "80,5", "80%", "80/100"
+      const m = s.match(/-?\d+(?:[\.,]\d+)?/);
+      if (!m) return null;
+      return Number(m[0].replace(",", "."));
+    }
+
+    function getSortValue(item, key) {
+      if (!item) return null;
+
+      if (key === "waktu") {
+        const t = item.waktu ? Date.parse(item.waktu) : NaN;
+        return Number.isFinite(t) ? t : null;
+      }
+
+      if (key === "score") return normalizeScore(item.score);
+
+      if (key === "nama") return (item.nama ?? "").toString().trim();
+      if (key === "sekolah") return (item.sekolah ?? "").toString().trim();
+
+      return (item[key] ?? "").toString().trim();
+    }
+
+    function compareValues(a, b, key) {
+      const va = getSortValue(a, key);
+      const vb = getSortValue(b, key);
+
+      const aEmpty = (va === null || va === undefined || va === "");
+      const bEmpty = (vb === null || vb === undefined || vb === "");
+
+      // nilai kosong selalu taruh paling bawah (baik asc/desc)
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1;
+      if (bEmpty) return -1;
+
+      if (key === "waktu" || key === "score") {
+        const na = Number(va);
+        const nb = Number(vb);
+        if (na < nb) return -1;
+        if (na > nb) return 1;
+        return 0;
+      }
+
+      return resultsCollator.compare(String(va), String(vb));
+    }
+
+    function applySort(data) {
+      const key = sortState?.key;
+      const dir = (sortState?.dir === "asc" ? 1 : -1);
+
+      const arr = Array.isArray(data) ? data.map((v, i) => ({ v, i })) : [];
+      if (!key) return arr.map(x => x.v);
+
+      // stable sort: jika nilai sama, kembalikan ke urutan awal
+      arr.sort((a, b) => {
+        const c = compareValues(a.v, b.v, key);
+        if (c !== 0) return c * dir;
+        return a.i - b.i;
+      });
+
+      return arr.map(x => x.v);
+    }
+
+    function updateSortIndicators() {
+      const keys = ["waktu", "nama", "sekolah", "score"];
+      keys.forEach(k => {
+        const el = document.getElementById(`sort-${k}`);
+        if (!el) return;
+
+        if (sortState.key !== k) {
+          el.textContent = "";
+          el.title = "";
+          return;
+        }
+
+        el.textContent = (sortState.dir === "asc" ? "▲" : "▼");
+        el.title = (sortState.dir === "asc" ? "Urut naik" : "Urut turun");
+      });
+    }
+
+
+    
+    
+
+    // =========================
+    // SEARCH (Guru / Guru Tamu)
+    // =========================
+    function onTeacherSearchInput() {
+      const el = document.getElementById("teacher-search");
+      teacherSearchQuery = (el && el.value ? el.value : "").toString().trim();
+      teacherPage = 1;
+      renderTeacherTable(undefined, true);
+    }
+
+    function clearTeacherSearch() {
+      teacherSearchQuery = "";
+      const el = document.getElementById("teacher-search");
+      if (el) el.value = "";
+      teacherPage = 1;
+      renderTeacherTable(undefined, true);
+    }
+
+    function applyTeacherFilter(data) {
+      const q = (teacherSearchQuery || "").toString().trim().toLowerCase();
+      if (!q) return Array.isArray(data) ? data : [];
+
+      return (Array.isArray(data) ? data : []).filter(item => {
+        const nama = (item?.nama ?? "").toString().toLowerCase();
+        const sekolah = (item?.sekolah ?? "").toString().toLowerCase();
+        return nama.includes(q) || sekolah.includes(q);
+      });
+    }
+
+
+    function gotoTeacherPage(page) {
+      const total = teacherResultsView.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      teacherPage = Math.min(totalPages, Math.max(1, page));
+      renderTeacherTable(undefined, true);
+    }
+
+    function renderTeacherTable(data, keepPage = false) {
+      // jika data diberikan, set sebagai sumber data utama (ALL)
+      if (data !== undefined) {
+        teacherResultsAll = Array.isArray(data) ? data : [];
+        teacherResultsCache = teacherResultsAll; // kompatibel dengan fitur download
+      }
+
+      updateSortIndicators();
+
+      const tbody = document.getElementById('teacher-table-body');
+      const metaEl = document.getElementById('teacher-pagination-meta');
+      const pageEl = document.getElementById('teacher-page-indicator');
+      const prevBtn = document.getElementById('teacher-prev');
+      const nextBtn = document.getElementById('teacher-next');
+      const searchMeta = document.getElementById('teacher-search-meta');
+
+      if (tbody) tbody.innerHTML = "";
+      if (!keepPage) teacherPage = 1;
+
+      // filter dulu, lalu sort, lalu paginate
+      const filtered = applyTeacherFilter(teacherResultsAll);
+      teacherResultsView = filtered;
+
+      if (!filtered.length) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="padding:15px;color:#64748b;">Tidak ada data yang cocok.</td></tr>`;
+        if (metaEl) metaEl.textContent = `Menampilkan 0-0 dari 0 data`;
+        if (searchMeta) {
+          const q = (teacherSearchQuery || "").trim();
+          searchMeta.textContent = q ? `Hasil pencarian: 0 (kata kunci: "${q}")` : `Total data: 0`;
+        }
+        if (pageEl) pageEl.textContent = "1/1";
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+        return;
+      }
+
+      const sorted = applySort(filtered);
+
+      const total = sorted.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (teacherPage > totalPages) teacherPage = totalPages;
+
+      const start = (teacherPage - 1) * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, total);
+      const slice = sorted.slice(start, end);
+
+      slice.forEach(item => {
+        const waktu = item.waktu ? new Date(item.waktu).toLocaleString() : "-";
+        const mapel = item.mapel === "matematika" ? "Numerasi" : (item.mapel === "bahasa" ? "Membaca" : (item.mapel || "-"));
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="padding:15px;border-top:1px solid #e2e8f0;">${waktu}</td>
+          <td style="padding:15px;border-top:1px solid #e2e8f0;">${item.nama || "-"}</td>
+          <td style="padding:15px;border-top:1px solid #e2e8f0;">${item.sekolah || "-"}</td>
+          <td style="padding:15px;border-top:1px solid #e2e8f0;">${mapel}</td>
+          <td style="padding:15px;border-top:1px solid #e2e8f0;font-weight:700;">${item.score ?? "-"}</td>
+        `;
+        if (tbody) tbody.appendChild(tr);
+      });
+
+      if (metaEl) metaEl.textContent = `Menampilkan ${start + 1}-${end} dari ${total} data`;
+      if (pageEl) pageEl.textContent = `${teacherPage}/${totalPages}`;
+      if (prevBtn) prevBtn.disabled = teacherPage <= 1;
+      if (nextBtn) nextBtn.disabled = teacherPage >= totalPages;
+
+      if (searchMeta) {
+        const q = (teacherSearchQuery || "").trim();
+        const allCount = (teacherResultsAll || []).length;
+        searchMeta.textContent = q
+          ? `Hasil pencarian: ${total} dari ${allCount} (kata kunci: "${q}")`
+          : `Total data: ${allCount}`;
+      }
+    }
+
+
+    // =========================
+    // DOWNLOAD HASIL (CSV/JSON)
+    // =========================
+    function safeText(v) {
+      if (v === null || v === undefined) return "";
+      return String(v).replace(/\r?\n/g, " ").trim();
+    }
+
+    function escapeAttr(v) {
+      return String(v ?? "").replace(/"/g, "&quot;");
+    }
+
+    function downloadBlob(filename, mime, content) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadResultsJSON() {
+      const data = (teacherResultsCache && teacherResultsCache.length)
+        ? teacherResultsCache
+        : JSON.parse(localStorage.getItem("cbtResults") || "[]");
+
+      const today = new Date().toISOString().slice(0,10);
+      downloadBlob(`hasil_cbt_${today}.json`, "application/json;charset=utf-8", JSON.stringify(data, null, 2));
+    }
+
+
+    function downloadResultsXLSX() {
+      const data = (teacherResultsCache && teacherResultsCache.length)
+        ? teacherResultsCache
+        : JSON.parse(localStorage.getItem("cbtResults") || "[]");
+
+      if (typeof XLSX === "undefined") {
+        alert("Library Excel (XLSX) belum termuat. Pastikan koneksi internet aktif atau tambahkan file library secara lokal.");
+        return;
+      }
+
+      const rows = data.map(item => {
+        const mapel = item.mapel === "matematika" ? "Numerasi" : (item.mapel === "bahasa" ? "Membaca" : (item.mapel || "-"));
+        return {
+          Waktu: item.waktu ? new Date(item.waktu).toLocaleString() : "",
+          Nama: safeText(item.nama),
+          Sekolah: safeText(item.sekolah),
+          Mapel: safeText(mapel),
+          Nilai: (item.score ?? "")
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Hasil");
+
+      const today = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(wb, `hasil_cbt_${today}.xlsx`);
+    }
+
+    function downloadResultsCSV() {
+      const data = (teacherResultsCache && teacherResultsCache.length)
+        ? teacherResultsCache
+        : JSON.parse(localStorage.getItem("cbtResults") || "[]");
+
+      const rows = [];
+      rows.push(["waktu","nama","sekolah","mapel","nilai"]);
+      data.forEach(item => {
+        const mapel = item.mapel === "matematika" ? "Numerasi" : (item.mapel === "bahasa" ? "Membaca" : (item.mapel || "-"));
+        rows.push([
+          safeText(item.waktu),
+          safeText(item.nama),
+          safeText(item.sekolah),
+          safeText(mapel),
+          (item.score ?? "")
+        ]);
+      });
+
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? "");
+        // escape CSV: wrap with quotes and double internal quotes
+        return `"${s.replace(/"/g, '""')}"`;
+      }).join(",")).join("\n");
+
+      const today = new Date().toISOString().slice(0,10);
+      downloadBlob(`hasil_cbt_${today}.csv`, "text/csv;charset=utf-8", csv);
+    }
+
+
+    // =========================
+    // STIMULUS IMAGE (LINK / FILE)
+    // =========================
+    function updateStimulusImagePreview(src) {
+      const wrap = document.getElementById("q-img-preview-wrap");
+      const img = document.getElementById("q-img-preview");
+      if (!wrap || !img) return;
+
+      if (!src) {
+        wrap.classList.add("hidden");
+        img.removeAttribute("src");
+        return;
+      }
+      img.src = src;
+      wrap.classList.remove("hidden");
+    }
+
+    function onStimulusImageUrlInput() {
+      // Jika user mengetik link, kita pakai link dan kosongkan data URL file
+      pendingStimulusImage = "";
+      const url = (document.getElementById("q-img-url")?.value || "").trim();
+      updateStimulusImagePreview(url);
+    }
+
+    function onStimulusImageFileChange(event) {
+      const file = event?.target?.files?.[0];
+      if (!file) return;
+
+      if (!file.type || !file.type.startsWith("image/")) {
+        alert("File harus berupa gambar.");
+        event.target.value = "";
+        return;
+      }
+
+      // Baca jadi data URL agar bisa disimpan ke localStorage
+      const reader = new FileReader();
+      reader.onload = () => {
+        pendingStimulusImage = String(reader.result || "");
+        // kosongkan url agar tidak bingung (yang dipakai adalah data URL)
+        const urlInput = document.getElementById("q-img-url");
+        if (urlInput) urlInput.value = "";
+        updateStimulusImagePreview(pendingStimulusImage);
+      };
+      reader.onerror = () => {
+        alert("Gagal membaca file gambar.");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearStimulusImage() {
+      pendingStimulusImage = "";
+      const urlInput = document.getElementById("q-img-url");
+      const fileInput = document.getElementById("q-img-file");
+      if (urlInput) urlInput.value = "";
+      if (fileInput) fileInput.value = "";
+      updateStimulusImagePreview("");
+    }
+
+    // =========================
+    // BANK SOAL (Tambah/Hapus)
+    // =========================
+    function bankKey(mapel) {
+      return mapel === "matematika" ? "cbtQuestionBank_matematika" : "cbtQuestionBank_bahasa";
+    }
+
+    function getBank(mapel) {
+      return mapel === "matematika" ? mathHOTS : indoHOTS;
+    }
+
+    function setBank(mapel, newBank) {
+      const cleaned = normalizeBank(Array.isArray(newBank) ? newBank : []);
+      if (mapel === "matematika") mathHOTS = cleaned;
+      else indoHOTS = cleaned;
+      localStorage.setItem(bankKey(mapel), JSON.stringify(cleaned));
+    }
+
+    function deepCopy(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+    
+// =========================
+// IMPORT/EXPORT BANK SOAL (EXCEL)
+// =========================
+
+// =========================
+// SUMBER BANK SOAL: Excel lokal atau Google Sheet
+// =========================
+// Pilih salah satu:
+// - "excel"  : ambil dari file statis data/bank_soal.xlsx (GitHub-friendly)
+// - "gsheet" : ambil dari Google Sheet (CSV publish atau Apps Script JSON)
+const QUESTION_SOURCE = "excel";
+
+// Jika excel:
+const BANK_XLSX_URL = "data/bank_soal.xlsx";
+
+// Jika Google Sheet (CSV publish):
+// Contoh (publish): https://docs.google.com/spreadsheets/d/e/<PUB_ID>/pub?gid=<GID>&single=true&output=csv
+const GSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR6i6GsRpAcwI64DNS-i0W2T2BsyPwRLF4fAuBhmVHdCyqLAXdIRjquXOxi_h7FeQ/pub?output=csv";
+
+// Jika pakai Apps Script JSON (opsional):
+// Deploy Apps Script sebagai Web App yang mengembalikan JSON array of rows
+const GSHEET_JSON_URL = "";
+
+// Cache load
+let banksLoadedExternal = false;
+
+// CSV parser sederhana (supports quotes)
+function parseCSV(text) {
+  const rows = [];
+  let cur = [];
+  let val = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i+1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') { val += '"'; i++; continue; }
+      if (ch === '"') { inQuotes = false; continue; }
+      val += ch;
+    } else {
+      if (ch === '"') { inQuotes = true; continue; }
+      if (ch === ",") { cur.push(val); val = ""; continue; }
+      if (ch === "\n") { cur.push(val); rows.push(cur); cur = []; val = ""; continue; }
+      if (ch === "\r") { continue; }
+      val += ch;
+    }
+  }
+  cur.push(val);
+  rows.push(cur);
+  return rows.filter(r => r.some(c => String(c ?? "").trim() !== ""));
+}
+
+function aoaToObjects(aoa) {
+  if (!aoa || !aoa.length) return [];
+  const header = aoa[0].map(h => String(h || "").trim());
+  const out = [];
+  for (let i = 1; i < aoa.length; i++) {
+    const r = aoa[i];
+    const obj = {};
+    header.forEach((h, j) => obj[h] = (r[j] ?? ""));
+    out.push(obj);
+  }
+  return out;
+}
+
+async function loadBanksFromExternalSource() {
+  if (banksLoadedExternal) return true;
+
+  const parsed = { matematika: [], bahasa: [] };
+
+  function ingestRow(r) {
+    if (!r) return;
+
+    const empty = QX_HEADERS.every(k => String(r[k] ?? "").trim() === "");
+    if (empty) return;
+
+    const mapel = normalizeMapelExcel(r.mapel, "matematika");
+    const type  = normalizeTypeExcel(r.type);
+
+    const stimulus = String(r.stimulus ?? "").trim();
+    const stimulus_img = String(r.stimulus_img ?? r.img ?? "").trim();
+    const question = String(r.question ?? "").trim();
+    const question_img = String(r.question_img ?? r.q_img ?? "").trim();
+
+    if (!question) return;
+
+    const qObj = { type, stimulus: stimulus || "-", stimulus_img: stimulus_img || "", q: question, question_img: question_img || "" };
+
+    if (type === "mc") {
+      const A = String(r.opt_a ?? "").trim();
+      const B = String(r.opt_b ?? "").trim();
+      const C = String(r.opt_c ?? "").trim();
+      const D = String(r.opt_d ?? "").trim();
+
+      const Ai = String(r.opt_a_img ?? "").trim();
+      const Bi = String(r.opt_b_img ?? "").trim();
+      const Ci = String(r.opt_c_img ?? "").trim();
+      const Di = String(r.opt_d_img ?? "").trim();
+
+      const a = letterToIndex(r.answer_mc, 4);
+      const okOpts = [(A||Ai),(B||Bi),(C||Ci),(D||Di)].every(Boolean);
+      if (!okOpts || a === null) return;
+
+      qObj.opt = [A,B,C,D];
+      qObj.opt_img = [Ai,Bi,Ci,Di];
+      qObj.a = a;
+
+    } else if (type === "mcc") {
+      const A = String(r.opt_a ?? "").trim();
+      const B = String(r.opt_b ?? "").trim();
+      const C = String(r.opt_c ?? "").trim();
+      const D = String(r.opt_d ?? "").trim();
+      const E = String(r.opt_e ?? "").trim();
+
+      const Ai = String(r.opt_a_img ?? "").trim();
+      const Bi = String(r.opt_b_img ?? "").trim();
+      const Ci = String(r.opt_c_img ?? "").trim();
+      const Di = String(r.opt_d_img ?? "").trim();
+      const Ei = String(r.opt_e_img ?? "").trim();
+
+      const key = parseMCCLetters(r.answer_mcc);
+      const okOpts = [(A||Ai),(B||Bi),(C||Ci),(D||Di),(E||Ei)].every(Boolean);
+      if (!okOpts || key.length < 1) return;
+
+      qObj.opt = [A,B,C,D,E];
+      qObj.opt_img = [Ai,Bi,Ci,Di,Ei];
+      qObj.a_multi = key;
+
+    } else if (type === "tf") {
+      const st = [];
+      const an = [];
+      const ti = [];
+      for (let i = 1; i <= 4; i++) {
+        const s = String(r[`tf_s${i}`] ?? "").trim();
+        const img = String(r[`tf_s${i}_img`] ?? "").trim();
+        const b = parseBool(r[`tf_a${i}`]);
+        if (s) {
+          if (b === null) return;
+          st.push(s);
+          ti.push(img || "");
+          an.push(b);
+        }
+      }
+      if (st.length < 3) return;
+      qObj.statements = st.slice(0,4);
+      qObj.tf_img = ti.slice(0,4);
+      qObj.a_tf = an.slice(0,4);
+    } else {
+      return;
+    }
+
+    parsed[mapel].push(qObj);
+  }
+
+  try {
+    if (QUESTION_SOURCE === "excel") {
+      if (typeof XLSX === "undefined") {
+        console.warn("XLSX belum termuat: tidak bisa baca bank_soal.xlsx");
+        return false;
+      }
+      const res = await fetch(BANK_XLSX_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Fetch Excel gagal: ${res.status}`);
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames.includes("Soal") ? "Soal" : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rawRows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
+      rawRows.forEach(ingestRow);
+
+    } else if (QUESTION_SOURCE === "gsheet") {
+      if (GSHEET_JSON_URL) {
+        const res = await fetch(GSHEET_JSON_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Fetch JSON gagal: ${res.status}`);
+        const arr = await res.json();
+        (Array.isArray(arr) ? arr : []).forEach(ingestRow);
+
+      } else if (GSHEET_CSV_URL) {
+        const res = await fetch(GSHEET_CSV_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Fetch CSV gagal: ${res.status}`);
+        const text = await res.text();
+        const aoa = parseCSV(text);
+        const objs = aoaToObjects(aoa);
+        objs.forEach(ingestRow);
+
+      } else {
+        console.warn("GSHEET mode aktif tapi URL belum diisi.");
+        return false;
+      }
+
+    } else {
+      console.warn("QUESTION_SOURCE tidak dikenali:", QUESTION_SOURCE);
+      return false;
+    }
+
+    // Cache ke localStorage agar load berikutnya cepat/offline
+    setBank("matematika", parsed.matematika);
+    setBank("bahasa", parsed.bahasa);
+    banksLoadedExternal = true;
+    console.log("Bank soal dimuat dari", QUESTION_SOURCE, "Mat:", parsed.matematika.length, "Bhs:", parsed.bahasa.length);
+    return true;
+
+  } catch (e) {
+    console.warn("Gagal load bank soal eksternal:", e);
+    return false;
+  }
+}
+
+async function reloadBankFromSource() {
+  banksLoadedExternal = false;
+  const ok = await loadBanksFromExternalSource();
+  renderQuestionManager();
+  if (ok) alert("Bank soal dimuat ulang dari sumber.");
+  else alert("Gagal memuat bank soal dari sumber. Cek URL/hosting.");
+}
+
+const QX_HEADERS = [
+  "mapel",
+  "type",
+  "stimulus",
+  "stimulus_img",
+  "question",
+  "question_img",
+  "opt_a",
+  "opt_a_img",
+  "opt_b",
+  "opt_b_img",
+  "opt_c",
+  "opt_c_img",
+  "opt_d",
+  "opt_d_img",
+  "opt_e",
+  "opt_e_img",
+  "answer_mc",
+  "answer_mcc",
+  "tf_s1",
+  "tf_s1_img",
+  "tf_a1",
+  "tf_s2",
+  "tf_s2_img",
+  "tf_a2",
+  "tf_s3",
+  "tf_s3_img",
+  "tf_a3",
+  "tf_s4",
+  "tf_s4_img",
+  "tf_a4"
+];
+
+function todayISO() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function normalizeMapelExcel(v, fallback) {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (!s) return fallback;
+  if (["matematika","numerasi","math","literasi numerasi"].includes(s)) return "matematika";
+  if (["bahasa","bhs","indonesia","bahasa indonesia","membaca","literasi membaca"].includes(s)) return "bahasa";
+  return fallback;
+}
+
+function normalizeTypeExcel(v) {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (["mc","pg","pilihan ganda"].includes(s)) return "mc";
+  if (["mcc","pg kompleks","pgk","kompleks"].includes(s)) return "mcc";
+  if (["tf","truefalse","benar/salah","benar salah"].includes(s)) return "tf";
+  return "mc";
+}
+
+function letterToIndex(v, max) {
+  const s = String(v ?? "").trim().toUpperCase();
+  if (!s) return null;
+
+  // boleh angka 0..max-1 atau 1..max
+  const n = parseInt(s, 10);
+  if (Number.isFinite(n)) {
+    if (n >= 0 && n < max) return n;
+    if (n >= 1 && n <= max) return n - 1;
+  }
+
+  const code = s.charCodeAt(0);
+  const idx = code - 65; // A=0
+  if (idx >= 0 && idx < max) return idx;
+
+  return null;
+}
+
+function parseMCCLetters(v) {
+  const s = String(v ?? "").trim().toUpperCase();
+  if (!s) return [];
+  const parts = s.split(/[,;\s]+/).filter(Boolean);
+  const idxs = parts
+    .map(p => letterToIndex(p, 5))
+    .filter(x => Number.isFinite(x));
+  return Array.from(new Set(idxs)).sort((a,b)=>a-b).slice(0,3);
+}
+
+function parseBool(v) {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "") return null;
+  if (["true","1","ya","y","benar"].includes(s)) return true;
+  if (["false","0","tidak","t","salah"].includes(s)) return false;
+  return null;
+}
+
+function rowIsEmpty(r) {
+  return QX_HEADERS.every(k => String(r?.[k] ?? "").trim() === "");
+}
+
+function downloadQuestionTemplateXLSX() {
+  if (typeof XLSX === "undefined") {
+    alert("Library Excel (XLSX) belum termuat.");
+    return;
+  }
+
+  const aoa = [
+    QX_HEADERS,
+
+    // Contoh 1: MC dengan gambar stimulus + gambar opsi (opsional)
+    ["matematika","mc",
+     "Perhatikan gambar berikut.","images/stimulus1.png",
+     "Berapakah 2 + 3 ?","",
+     "4","",
+     "5","images/opsiB.png",
+     "6","",
+     "7","",
+     "","",
+     "B","",
+     "","","",
+     "","","",
+     "","","",
+     "","",""],
+
+    // Contoh 2: MCC dengan teks + gambar opsi
+    ["bahasa","mcc",
+     "Pilih kata sifat.","",
+     "Kata manakah yang termasuk kata sifat?","",
+     "indah","",
+     "berlari","",
+     "besar","images/besar.png",
+     "makan","",
+     "cepat","",
+     "","A,C,E",
+     "","","",
+     "","","",
+     "","","",
+     "","",""],
+
+    // Contoh 3: TF (Benar/Salah) dengan gambar stimulus + gambar pernyataan
+    ["matematika","tf",
+     "Amati gambar grafik berikut.","images/grafik.png",
+     "Tentukan Benar/Salah untuk tiap pernyataan.","",
+     "","","","","","","","","","","",
+     "","",
+     "2 adalah bilangan genap","images/tf1.png","TRUE",
+     "9 adalah bilangan prima","images/tf2.png","FALSE",
+     "10 lebih besar dari 7","","TRUE",
+     "","",""]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Soal");
+  XLSX.writeFile(wb, `template_soal_cbt_${todayISO()}.xlsx`);
+}
+
+function exportQuestionBankXLSX() {
+  if (typeof XLSX === "undefined") {
+    alert("Library Excel (XLSX) belum termuat.");
+    return;
+  }
+
+  const mapel = document.getElementById("q-mapel-select")?.value || "matematika";
+  const bank = normalizeBank(getBank(mapel));
+
+  const rows = bank.map(qRaw => {
+    const q = normalizeQuestion(qRaw || {});
+    const row = {};
+    QX_HEADERS.forEach(h => row[h] = "");
+
+    row.mapel = mapel;
+    row.type = q.type;
+    row.stimulus = (q.stimulus && q.stimulus !== "-") ? q.stimulus : "";
+    row.stimulus_img = q.stimulus_img || "";
+    row.question = q.q || "";
+    row.question_img = q.question_img || "";
+
+    const oi = Array.isArray(q.opt_img) ? q.opt_img : [];
+
+    if (q.type === "mc") {
+      row.opt_a = q.opt?.[0] || ""; row.opt_a_img = oi[0] || "";
+      row.opt_b = q.opt?.[1] || ""; row.opt_b_img = oi[1] || "";
+      row.opt_c = q.opt?.[2] || ""; row.opt_c_img = oi[2] || "";
+      row.opt_d = q.opt?.[3] || ""; row.opt_d_img = oi[3] || "";
+      row.answer_mc = (["A","B","C","D"][q.a] || "");
+
+    } else if (q.type === "mcc") {
+      row.opt_a = q.opt?.[0] || ""; row.opt_a_img = oi[0] || "";
+      row.opt_b = q.opt?.[1] || ""; row.opt_b_img = oi[1] || "";
+      row.opt_c = q.opt?.[2] || ""; row.opt_c_img = oi[2] || "";
+      row.opt_d = q.opt?.[3] || ""; row.opt_d_img = oi[3] || "";
+      row.opt_e = q.opt?.[4] || ""; row.opt_e_img = oi[4] || "";
+      const key = Array.isArray(q.a_multi) ? q.a_multi : [];
+      row.answer_mcc = key.map(i => ["A","B","C","D","E"][i] || "?").join(",");
+
+    } else if (q.type === "tf") {
+      const st = Array.isArray(q.statements) ? q.statements : [];
+      const ans = Array.isArray(q.a_tf) ? q.a_tf : [];
+      const ti = Array.isArray(q.tf_img) ? q.tf_img : [];
+      for (let i = 0; i < Math.min(4, st.length); i++) {
+        row[`tf_s${i+1}`] = st[i] || "";
+        row[`tf_s${i+1}_img`] = ti[i] || "";
+        row[`tf_a${i+1}`] = (ans[i] === true) ? "TRUE" : "FALSE";
+      }
+    }
+
+    return row;
+  });
+
+  const ws = XLSX.utils.json_to_sheet(rows, { header: QX_HEADERS });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Soal");
+  XLSX.writeFile(wb, `bank_soal_${mapel}_${todayISO()}.xlsx`);
+}
+
+function handleImportQuestions(ev) {
+  const file = ev?.target?.files?.[0];
+  ev.target.value = "";
+  if (!file) return;
+  importQuestionBankXLSX(file);
+}
+
+function importQuestionBankXLSX(file) {
+  if (typeof XLSX === "undefined") {
+    alert("Library Excel (XLSX) belum termuat.");
+    return;
+  }
+
+  const replace = !!document.getElementById("q-import-replace")?.checked;
+  const fallbackMapel = document.getElementById("q-mapel-select")?.value || "matematika";
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: "array" });
+
+      const sheetName = wb.SheetNames.includes("Soal") ? "Soal" : wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rawRows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
+
+      const toAdd = { matematika: [], bahasa: [] };
+      let skipped = 0;
+
+      rawRows.forEach((r) => {
+        if (rowIsEmpty(r)) return;
+
+        const mapel = normalizeMapelExcel(r.mapel, fallbackMapel);
+        const type = normalizeTypeExcel(r.type);
+
+        const stimulus = String(r.stimulus ?? "").trim();
+        const stimulus_img = String(r.stimulus_img ?? r.img ?? "").trim();
+        const question = String(r.question ?? "").trim();
+        const question_img = String(r.question_img ?? r.q_img ?? "").trim();
+
+        if (!question) { skipped++; return; }
+
+        let qObj = { type, stimulus: stimulus || "-", stimulus_img: stimulus_img || "", q: question, question_img: question_img || "" };
+
+        if (type === "mc") {
+          const A = String(r.opt_a ?? "").trim();
+          const B = String(r.opt_b ?? "").trim();
+          const C = String(r.opt_c ?? "").trim();
+          const D = String(r.opt_d ?? "").trim();
+
+          const Ai = String(r.opt_a_img ?? "").trim();
+          const Bi = String(r.opt_b_img ?? "").trim();
+          const Ci = String(r.opt_c_img ?? "").trim();
+          const Di = String(r.opt_d_img ?? "").trim();
+
+          const a = letterToIndex(r.answer_mc, 4);
+          const okOpts = [(A||Ai),(B||Bi),(C||Ci),(D||Di)].every(Boolean);
+          if (!okOpts || a === null) { skipped++; return; }
+
+          qObj.opt = [A,B,C,D];
+          qObj.opt_img = [Ai,Bi,Ci,Di];
+          qObj.a = a;
+
+        } else if (type === "mcc") {
+          const A = String(r.opt_a ?? "").trim();
+          const B = String(r.opt_b ?? "").trim();
+          const C = String(r.opt_c ?? "").trim();
+          const D = String(r.opt_d ?? "").trim();
+          const E = String(r.opt_e ?? "").trim();
+
+          const Ai = String(r.opt_a_img ?? "").trim();
+          const Bi = String(r.opt_b_img ?? "").trim();
+          const Ci = String(r.opt_c_img ?? "").trim();
+          const Di = String(r.opt_d_img ?? "").trim();
+          const Ei = String(r.opt_e_img ?? "").trim();
+
+          const key = parseMCCLetters(r.answer_mcc);
+          const okOpts = [(A||Ai),(B||Bi),(C||Ci),(D||Di),(E||Ei)].every(Boolean);
+          if (!okOpts || key.length < 1) { skipped++; return; }
+
+          qObj.opt = [A,B,C,D,E];
+          qObj.opt_img = [Ai,Bi,Ci,Di,Ei];
+          qObj.a_multi = key;
+
+        } else if (type === "tf") {
+          const st = [];
+          const an = [];
+          const ti = [];
+          for (let i = 1; i <= 4; i++) {
+            const s = String(r[`tf_s${i}`] ?? "").trim();
+            const img = String(r[`tf_s${i}_img`] ?? "").trim();
+            const b = parseBool(r[`tf_a${i}`]);
+            if (s) {
+              if (b === null) { skipped++; return; }
+              st.push(s);
+              ti.push(img || "");
+              an.push(b);
+            }
+          }
+          if (st.length < 3) { skipped++; return; }
+          qObj.statements = st.slice(0,4);
+          qObj.tf_img = ti.slice(0,4);
+          qObj.a_tf = an.slice(0,4);
+
+        } else {
+          skipped++; return;
+        }
+
+        toAdd[mapel].push(qObj);
+      });
+
+      ["matematika","bahasa"].forEach(m => {
+        if (!toAdd[m].length) return;
+        const base = replace ? [] : deepCopy(getBank(m));
+        const merged = base.concat(toAdd[m]);
+        setBank(m, merged);
+      });
+
+      renderQuestionManager();
+      alert(`Import selesai.
+Ditambahkan: Matematika=${toAdd.matematika.length}, Bahasa=${toAdd.bahasa.length}
+Dilewati (invalid/kosong): ${skipped}`);
+
+    } catch (err) {
+      console.error(err);
+      alert("Gagal import. Pastikan format kolom sesuai template.");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+function typeLabel(t) {
+  if (t === "mc") return "PG";
+  if (t === "mcc") return "PG Kompleks";
+  if (t === "tf") return "Benar/Salah";
+  return t || "-";
+}
+
+function renderQuestionManager() {
+  // jika ganti mapel/refresh list, keluar dari mode edit
+  if (editingQuestionIndex !== null) cancelEditQuestion();
+  const mapel = document.getElementById("q-mapel-select")?.value || "matematika";
+  const bank = normalizeBank(getBank(mapel));
+
+  const box = document.getElementById("question-manager-list");
+  if (!box) return;
+
+  if (!bank.length) {
+    box.innerHTML = `<div style="padding:14px; color:#64748b;">Belum ada soal pada bank ini.</div>`;
+    return;
+  }
+
+  const rows = bank.map((qRaw, idx) => {
+    const q = normalizeQuestion(qRaw || {});
+    const stimulus = safeText(q.stimulus || "");
+    const stimulusShort = stimulus.length > 120 ? stimulus.slice(0, 120) + "…" : stimulus;
+
+    const qText = safeText(q.q || "");
+    const qShort = qText.length > 140 ? qText.slice(0, 140) + "…" : qText;
+
+    const badge = `<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; font-weight:700;">${typeLabel(q.type)}</span>`;
+
+    let k = "-";
+    if (q.type === "mc") {
+      k = ["A","B","C","D"][q.a] || "-";
+    } else if (q.type === "mcc") {
+      const arr = Array.isArray(q.a_multi) ? q.a_multi : [];
+      k = arr.length ? arr.map(i => ["A","B","C","D","E"][i] || "?").join(", ") : "-";
+    } else if (q.type === "tf") {
+      k = `${(q.statements || []).length} pernyataan`;
+    }
+
+    const imgThumb = q.img ? `<div style="margin-top:10px;"><img src="${escapeAttr(q.img)}" alt="Gambar stimulus" loading="lazy" referrerpolicy="no-referrer" style="max-width:180px; width:100%; height:auto; border-radius:12px; border:1px solid #e2e8f0; background:white;" /></div>` : "";
+
+    return `
+      <tr>
+        <td style="padding:12px; border-top:1px solid #e2e8f0; width:60px; font-weight:700;">${idx + 1}</td>
+        <td style="padding:12px; border-top:1px solid #e2e8f0;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+            ${badge}
+            <div style="font-size:12px; color:#64748b;">Kunci: <b>${safeText(k)}</b></div>
+          </div>
+          <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Stimulus: ${stimulusShort || "-"}</div>
+          <div style="font-weight:700;">${qShort || "-"}</div>
+          ${imgThumb}
+        </td>
+        <td style="padding:12px; border-top:1px solid #e2e8f0; width:160px; text-align:right;">
+          <button class="btn btn-outline" onclick="startEditQuestion(${idx})">Edit</button>
+          <button class="btn btn-danger" onclick="deleteQuestion(${idx})">Hapus</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  box.innerHTML = `
+    <table style="width:100%; border-collapse: collapse;">
+      <thead style="background:#f8fafc;">
+        <tr>
+          <th style="padding:12px; text-align:left; width:60px;">No</th>
+          <th style="padding:12px; text-align:left;">Soal</th>
+          <th style="padding:12px; text-align:right; width:160px;">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function setQuestionEditUI(editing) {
+      const saveBtn = document.getElementById("q-save-btn");
+      const cancelBtn = document.getElementById("q-cancel-edit-btn");
+      const indicator = document.getElementById("q-editing-indicator");
+      if (saveBtn) saveBtn.textContent = editing ? "Update Soal" : "Simpan Soal";
+      if (cancelBtn) cancelBtn.classList.toggle("hidden", !editing);
+      if (indicator) indicator.classList.toggle("hidden", !editing);
+      if (indicator && editing) indicator.textContent = `Sedang mengedit soal nomor ${editingQuestionIndex + 1}.`;
+    }
+
+    function cancelEditQuestion() {
+  editingQuestionIndex = null;
+  setQuestionEditUI(false);
+
+  // Bersihkan form umum
+  document.getElementById("q-stimulus").value = "";
+  clearStimulusImage();
+  document.getElementById("q-text").value = "";
+
+  // reset tipe
+  const typeSel = document.getElementById("q-type");
+  if (typeSel) typeSel.value = "mc";
+
+  // PG
+  const idsMC = ["q-opt-a","q-opt-b","q-opt-c","q-opt-d"];
+  idsMC.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  const ansSel = document.getElementById("q-answer");
+  if (ansSel) ansSel.value = "0";
+
+  // PG Kompleks
+  const idsMCC = ["q2-opt-a","q2-opt-b","q2-opt-c","q2-opt-d","q2-opt-e"];
+  idsMCC.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  for (let i = 0; i < 5; i++) {
+    const cb = document.getElementById(`q2-ans-${i}`);
+    if (cb) cb.checked = false;
+  }
+  updateMCCKeyCount();
+
+  // Benar/Salah
+  const countSel = document.getElementById("q3-count");
+  if (countSel) countSel.value = "4";
+  for (let i = 0; i < 4; i++) {
+    const s = document.getElementById(`q3-s${i}`);
+    const a = document.getElementById(`q3-a${i}`);
+    if (s) s.value = "";
+    if (a) a.value = (i === 0) ? "true" : "false";
+  }
+  onTFCountChange();
+
+  onQuestionTypeChange();
+}
+
+function startEditQuestion(idx) {
+  const mapel = document.getElementById("q-mapel-select")?.value || "matematika";
+  const bank = normalizeBank(getBank(mapel));
+  if (!bank || idx < 0 || idx >= bank.length) return;
+
+  const q = normalizeQuestion(bank[idx]);
+  editingQuestionIndex = idx;
+
+  // umum
+  document.getElementById("q-stimulus").value = q.stimulus || "";
+  document.getElementById("q-text").value = q.q || "";
+
+  // image
+  const img = String(q.img || "").trim();
+  const urlInput = document.getElementById("q-img-url");
+  const fileInput = document.getElementById("q-img-file");
+  if (fileInput) fileInput.value = "";
+
+  if (img && img.startsWith("data:image")) {
+    pendingStimulusImage = img;
+    if (urlInput) urlInput.value = "";
+    updateStimulusImagePreview(img);
+  } else {
+    pendingStimulusImage = "";
+    if (urlInput) urlInput.value = img;
+    updateStimulusImagePreview(img);
+  }
+
+  // set tipe
+  const typeSel = document.getElementById("q-type");
+  if (typeSel) typeSel.value = q.type || "mc";
+  onQuestionTypeChange();
+
+  if (q.type === "mc") {
+    document.getElementById("q-opt-a").value = q.opt?.[0] || "";
+    document.getElementById("q-opt-b").value = q.opt?.[1] || "";
+    document.getElementById("q-opt-c").value = q.opt?.[2] || "";
+    document.getElementById("q-opt-d").value = q.opt?.[3] || "";
+    document.getElementById("q-answer").value = String(q.a ?? 0);
+  } else if (q.type === "mcc") {
+    document.getElementById("q2-opt-a").value = q.opt?.[0] || "";
+    document.getElementById("q2-opt-b").value = q.opt?.[1] || "";
+    document.getElementById("q2-opt-c").value = q.opt?.[2] || "";
+    document.getElementById("q2-opt-d").value = q.opt?.[3] || "";
+    document.getElementById("q2-opt-e").value = q.opt?.[4] || "";
+
+    const key = Array.isArray(q.a_multi) ? q.a_multi : [];
+    for (let i = 0; i < 5; i++) {
+      const cb = document.getElementById(`q2-ans-${i}`);
+      if (cb) cb.checked = key.includes(i);
+    }
+    updateMCCKeyCount();
+  } else if (q.type === "tf") {
+    const n = (q.statements || []).length;
+    const countSel = document.getElementById("q3-count");
+    if (countSel) countSel.value = (n <= 3) ? "3" : "4";
+    onTFCountChange();
+
+    for (let i = 0; i < 4; i++) {
+      const row = document.getElementById(`q3-row-${i}`);
+      const s = document.getElementById(`q3-s${i}`);
+      const a = document.getElementById(`q3-a${i}`);
+      if (s) s.value = q.statements?.[i] || "";
+      if (a) a.value = String(q.a_tf?.[i] ?? false);
+      // row 3 handled by onTFCountChange
+    }
+  }
+
+  setQuestionEditUI(true);
+  document.getElementById("q-text")?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// =========================
+// FORM TIPE SOAL (Guru)
+// =========================
+function onQuestionTypeChange() {
+  const type = document.getElementById("q-type")?.value || "mc";
+  const secMC = document.getElementById("q-type-mc");
+  const secMCC = document.getElementById("q-type-mcc");
+  const secTF = document.getElementById("q-type-tf");
+  if (secMC) secMC.classList.toggle("hidden", type !== "mc");
+  if (secMCC) secMCC.classList.toggle("hidden", type !== "mcc");
+  if (secTF) secTF.classList.toggle("hidden", type !== "tf");
+
+  const hint = document.getElementById("q-type-hint");
+  if (hint) {
+    if (type === "mc") hint.textContent = "Pilihan ganda biasa: 1 jawaban benar dari A–D.";
+    else if (type === "mcc") hint.textContent = "PG kompleks: pilih 1–3 jawaban benar dari A–E.";
+    else if (type === "tf") hint.textContent = "Benar/Salah: isi 3–4 pernyataan + kunci Benar/Salah.";
+    else hint.textContent = "";
+  }
+}
+
+function getMCCKey() {
+  const picked = [];
+  for (let i = 0; i < 5; i++) {
+    const cb = document.getElementById(`q2-ans-${i}`);
+    if (cb && cb.checked) picked.push(i);
+  }
+  return picked;
+}
+
+function updateMCCKeyCount() {
+  const el = document.getElementById("q2-ans-count");
+  const n = getMCCKey().length;
+  if (el) el.textContent = `${n} dipilih`;
+}
+
+function onMCCKeyToggle(i) {
+  // enforce max 3
+  const cb = document.getElementById(`q2-ans-${i}`);
+  if (!cb) return;
+  const picked = getMCCKey();
+  if (cb.checked && picked.length > 3) {
+    cb.checked = false;
+    alert("Maksimal 3 jawaban benar.");
+  }
+  updateMCCKeyCount();
+}
+
+function onTFCountChange() {
+  const n = parseInt(document.getElementById("q3-count")?.value || "4", 10);
+  const row3 = document.getElementById("q3-row-3");
+  if (row3) row3.classList.toggle("hidden", n <= 3);
+}
+
+function saveQuestion() {
+  const mapel = document.getElementById("q-mapel-select")?.value || "matematika";
+
+  const stimulus = (document.getElementById("q-stimulus")?.value || "").trim();
+  const qText = (document.getElementById("q-text")?.value || "").trim();
+
+  const type = document.getElementById("q-type")?.value || "mc";
+
+  const imgUrl = (document.getElementById("q-img-url")?.value || "").trim();
+  const img = pendingStimulusImage || imgUrl;
+
+  if (!qText) { alert("Pertanyaan wajib diisi."); return; }
+
+  let newQ = { type, stimulus: stimulus || "-", stimulus_img: img || "", q: qText, question_img: "", opt_img: [] };
+
+  if (type === "mc") {
+    const a = parseInt(document.getElementById("q-answer")?.value || "0", 10);
+
+    const optA = (document.getElementById("q-opt-a")?.value || "").trim();
+    const optB = (document.getElementById("q-opt-b")?.value || "").trim();
+    const optC = (document.getElementById("q-opt-c")?.value || "").trim();
+    const optD = (document.getElementById("q-opt-d")?.value || "").trim();
+
+    if (!optA || !optB || !optC || !optD) { alert("Semua opsi A–D wajib diisi."); return; }
+    if (![0,1,2,3].includes(a)) { alert("Kunci jawaban tidak valid."); return; }
+
+    newQ.opt = [optA, optB, optC, optD];
+    newQ.a = a;
+
+  } else if (type === "mcc") {
+    const optA = (document.getElementById("q2-opt-a")?.value || "").trim();
+    const optB = (document.getElementById("q2-opt-b")?.value || "").trim();
+    const optC = (document.getElementById("q2-opt-c")?.value || "").trim();
+    const optD = (document.getElementById("q2-opt-d")?.value || "").trim();
+    const optE = (document.getElementById("q2-opt-e")?.value || "").trim();
+
+    if (!optA || !optB || !optC || !optD || !optE) { alert("Semua opsi A–E wajib diisi."); return; }
+
+    const key = getMCCKey();
+    if (key.length < 1) { alert("Pilih minimal 1 jawaban benar."); return; }
+    if (key.length > 3) { alert("Maksimal 3 jawaban benar."); return; }
+
+    newQ.opt = [optA, optB, optC, optD, optE];
+    newQ.a_multi = key;
+
+  } else if (type === "tf") {
+    const n = parseInt(document.getElementById("q3-count")?.value || "4", 10);
+    const statements = [];
+    const answers = [];
+
+    for (let i = 0; i < n; i++) {
+      const s = (document.getElementById(`q3-s${i}`)?.value || "").trim();
+      const a = document.getElementById(`q3-a${i}`)?.value;
+      if (!s) { alert(`Pernyataan ${i+1} wajib diisi.`); return; }
+      statements.push(s);
+      answers.push(a === "true");
+    }
+
+    newQ.statements = statements;
+    newQ.a_tf = answers;
+
+  } else {
+    alert("Jenis soal tidak dikenali.");
+    return;
+  }
+
+  const bank = deepCopy(getBank(mapel));
+
+  const isEditing = (editingQuestionIndex !== null && editingQuestionIndex !== undefined);
+  if (isEditing) {
+    if (editingQuestionIndex < 0 || editingQuestionIndex >= bank.length) {
+      alert("Gagal update: indeks soal tidak valid.");
+      return;
+    }
+    bank[editingQuestionIndex] = newQ;
+  } else {
+    bank.push(newQ);
+  }
+
+  setBank(mapel, bank);
+  cancelEditQuestion();
+  renderQuestionManager();
+  alert(isEditing ? "Soal berhasil diperbarui!" : "Soal berhasil ditambahkan!");
+}
+
+// Backward compat (jika masih ada tombol lama)
+    function addQuestion() { saveQuestion(); }
+
+
+    function deleteQuestion(idx) {
+      const mapel = document.getElementById("q-mapel-select")?.value || "matematika";
+      const bank = deepCopy(getBank(mapel));
+
+      if (idx < 0 || idx >= bank.length) return;
+      const ok = confirm(`Hapus soal nomor ${idx+1}?`);
+      if (!ok) return;
+
+      bank.splice(idx, 1);
+      setBank(mapel, bank);
+      renderQuestionManager();
+    }
+
+    function resetQuestionBank() {
+      const mapel = document.getElementById("q-mapel-select")?.value || "matematika";
+      const ok = confirm("Reset bank soal mapel ini ke default? (soal buatan guru akan hilang)");
+      if (!ok) return;
+
+      // hapus storage dan kembalikan ke default
+      localStorage.removeItem(bankKey(mapel));
+      if (mapel === "matematika") setBank(mapel, deepCopy(defaultMathHOTS));
+      else setBank(mapel, deepCopy(defaultIndoHOTS));
+
+      renderQuestionManager();
+      alert("Bank soal berhasil di-reset.");
+    }
+
+// Init UI (agar form guru tampil sesuai jenis soal default)
+window.addEventListener("load", () => {
+  // load bank soal dari sumber (excel/gsheet)
+  loadBanksFromExternalSource().catch(()=>{});
+
+  try {
+    onQuestionTypeChange();
+    onTFCountChange();
+    updateMCCKeyCount();
+  } catch (e) {}
+});
+
+  </script>
+</body>
+</html>
