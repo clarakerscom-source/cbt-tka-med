@@ -99,6 +99,25 @@
     .review-kv div:first-child, .review-kv div:nth-child(2) { border-top:none; }
     .review-answer { font-weight:700; }
 
+  /* Traktir Kopi (chip di bawah tombol Mulai Ujian) */
+.coffee-chip-wrap{ display:flex; justify-content:center; margin-top: 10px; }
+.coffee-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #7c2d12;
+  text-decoration:none;
+  font-weight:800;
+  border: 1px solid #fed7aa;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.coffee-chip:hover{ transform: translateY(-1px); box-shadow: 0 12px 26px rgba(0,0,0,.12); }
+.coffee-chip small{ font-weight:700; opacity:.8; }
+
   </style>
 </head>
 <body>
@@ -130,6 +149,8 @@
         </select>
       </div>
       <button class="btn btn-primary" style="width: 100%;" onclick="startExam()">Mulai Ujian</button>
+
+      <div class="coffee-chip-wrap"><a class="coffee-chip" href="https://saweria.co/elchaw" target="_blank" rel="noopener" aria-label="Traktir Kopi (Saweria)">Traktir Kopi ☕ <small>Dukung pengembangan</small></a></div>
       <div style="text-align: center; margin-top: 20px;">
         <small style="color: #64748b; cursor: pointer;" onclick="showTeacherLogin()">Login Guru</small>
         <span style="color:#cbd5e1; margin: 0 8px;">|</span>
